@@ -1,0 +1,60 @@
+﻿@{
+    Layout = null; // Tắt Layout mặc định nếu bạn muốn trang login độc lập
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Đăng nhập - Apartment</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="~/css/site.css">
+</head>
+<body>
+
+    <nav class="navbar navbar-custom py-2 shadow-sm">
+        <div class="container-fluid">
+            <a class="navbar-brand text-white fw-bold" href="#">
+                <i class="fa-solid fa-building me-2"></i>APARTMENT
+            </a>
+            <span class="text-white small">Đăng nhập</span>
+        </div>
+    </nav>
+
+    <div class="container d-flex justify-content-center align-items-center" style="min-height: 80vh;">
+        <div class="login-card p-5">
+            <h3 class="text-center login-title mb-4">ĐĂNG NHẬP</h3>
+
+            <form action="/Users/Login" method="post">
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">Email / Tài khoản</label>
+                    <input type="text" class="form-control" name="email" placeholder=""
+                           value="@(Context.Request.Method == "POST" ? Context.Request.Form["email"] : "")">
+                    @if (ViewBag.EmailErr != null)
+                    {
+                        <span class="text-danger small">@ViewBag.EmailErr</span>
+                    }
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label small fw-bold">Mật khẩu</label>
+                    <div class="input-group">
+                        <input type="password" class="form-control" name="password">
+                        <span class="input-group-text bg-white border-start-0">
+                            <i class="fa-solid fa-eye-slash text-muted"></i>
+                        </span>
+                    </div>
+                    @if (ViewBag.PasswordErr != null)
+                    {
+                        <span class="text-danger small">@ViewBag.PasswordErr</span>
+                    }
+                </div>
+
+                <button type="submit" class="btn btn-login w-100 py-2">Đăng Nhập</button>
+            </form>
+        </div>
+    </div>                                                                                         
+
+</body>
+</html>

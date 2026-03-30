@@ -1,0 +1,134 @@
+﻿html {
+  font-size: 14px;
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+}
+
+html {
+  position: relative;
+  min-height: 100%;
+}
+
+body {
+  margin-bottom: 60px;
+}
+body {
+    background-color: #E9E4C9; /* Màu nền kem nhạt của trang */
+}
+
+.navbar-custom {
+    background-color: #D35400; /* Màu cam đậm của thanh Header */
+}
+
+.login-card {
+    background-color: #E5C38D; /* Màu vàng cam của khung Login */
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    max-width: 450px;
+    width: 100%;
+}
+
+.login-title {
+    color: #8B0000; /* Màu đỏ đô của chữ ĐĂNG NHẬP */
+    font-weight: bold;
+}
+
+.btn-login {
+    background-color: #D35400; /* Màu nút bấm */
+    color: white;
+    border-radius: 8px;
+    border: none;
+    font-weight: bold;
+}
+
+    .btn-login:hover {
+        background-color: #A04000;
+        color: white;
+    }
+
+.input-group-text {
+    background: transparent;
+    border-right: none;
+}
+
+.form-control {
+    border-left: none;
+}
+/* Tận dụng các màu Phước đã định nghĩa */
+.dashboard-wrapper {
+    background-color: #E5C38D; /* Cùng màu với login-card */
+    border-radius: 20px;
+    padding: 2rem;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+}
+
+.card-stat {
+    border-radius: 12px;
+    padding: 1.5rem;
+    color: white;
+    text-align: center;
+    transition: 0.3s;
+}
+
+    .card-stat:hover {
+        transform: scale(1.05);
+    }
+
+.bg-tòa-nhà {
+    background-color: #6C63FF;
+}
+/* Tím */
+.bg-phòng {
+    background-color: #2ECC71;
+}
+/* Xanh lá */
+
+.feature-box {
+    background-color: white;
+    border-radius: 15px;
+    padding: 2rem;
+    text-align: center;
+    height: 100%;
+    border: 2px solid transparent;
+}
+
+    .feature-box:hover {
+        border-color: #D35400;
+    }
+
+.feature-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+/* Nút truy cập đồng bộ với btn-login */
+.btn-access {
+    background-color: #D35400;
+    color: white;
+    border-radius: 20px;
+    padding: 0.5rem 2rem;
+    font-weight: bold;
+    border: none;
+    text-decoration: none;
+    display: inline-block;
+}
+
+    .btn-access:hover {
+        background-color: #A04000;
+        color: white;
+    }
+
+.chart-box {
+    background: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+}
