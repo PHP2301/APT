@@ -1,12 +1,25 @@
-﻿namespace APT.Models
+﻿using System.ComponentModel.DataAnnotations.Schema;
+
+namespace APT.Models
 {
     public class BuildingManager
     {
         public int Id { get; set; }
-        //public int BuildingId { get; set; }
+
+        [Column("building_id")]
+        public int BuildingId { get; set; }
+
+        [Column("manager_id")]
         public int ManagerId { get; set; }
 
-        public Building Building { get; set; }
-        public User Manager { get; set; }
+        [Column("created_at")]
+        public DateTime CreatedAt { get; set; }
+
+        // Navigation
+        [ForeignKey("BuildingId")]
+        public Building Building { get; set; } = null!;
+
+        [ForeignKey("ManagerId")]
+        public User Manager { get; set; } = null!;
     }
 }

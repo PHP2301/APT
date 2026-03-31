@@ -22,7 +22,7 @@ namespace APT.Controllers
                 .AsQueryable();
 
             if (buildingId.HasValue)
-                query = query.Where(a => a.Building_id == buildingId);
+                query = query.Where(a => a.BuildingId == buildingId);
 
             ViewBag.Buildings = _context.Buildings.ToList();
 
@@ -49,7 +49,7 @@ namespace APT.Controllers
             _context.SaveChanges();
 
             return RedirectToAction("Index",
-                new { buildingId = model.Building_id });
+                new { buildingId = model.BuildingId });
         }
     }
 }

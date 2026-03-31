@@ -46,7 +46,7 @@ namespace ApartmentMVC.Controllers
                 total_rooms = _context.Apartments.Count(),
                 total_users = _context.Users.Count(),
                 chartData = _context.Apartments
-                    .GroupBy(a => a.Building_id)
+                    .GroupBy(a => a.BuildingId)
                     .Select(g => new
                     {
                         buildingId = g.Key,

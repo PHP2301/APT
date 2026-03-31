@@ -3,8 +3,11 @@ using Microsoft.AspNetCore.Http;
 using APT.Data;
 using APT.Models;
 using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
 using System.IO;
 using Microsoft.EntityFrameworkCore;
+
 
 namespace APT.Controllers
 {
@@ -19,10 +22,11 @@ namespace APT.Controllers
 
         // ==========================
         // LOGIN
+        // GET + POST: /users/login
         // ==========================
         public IActionResult Login()
         {
-            // Nếu đã login rồi thì vào thẳng Dashboard
+            // Đã login → đá về dashboard
             if (HttpContext.Session.GetInt32("user_id") != null)
                 return RedirectToAction("Index", "Dashboard");
 
@@ -32,23 +36,19 @@ namespace APT.Controllers
         [HttpPost]
         public IActionResult Login(string email, string password)
         {
-            if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+            if (string.IsNullOrWhiteSpace(email))
             {
-                ViewBag.Error = "Vui lòng nhập đầy đủ thông tin";
+                ViewBag.EmailErr = "Vui lòng nhập email";
                 return View();
             }
 
-            // Dùng Select để tránh lỗi "Invalid column name" nếu Model thừa thuộc tính
-            var user = _context.Users
-                .Where(u => u.Email == email)
-                .Select(u => new {
-                    u.Id,
-                    u.Email,
-                    u.Password,
-                    u.FullName,
-                    u.Role
-                })
-                .FirstOrDefault();
+            if (string.IsNullOrWhiteSpace(password))
+            {
+                ViewBag.PasswordErr = "Vui lòng nhập mật khẩu";
+                return View();
+            }
+
+            var user = _context.Users.FirstOrDefault(u => u.Email == email);
 
             if (user == null)
             {
@@ -56,20 +56,27 @@ namespace APT.Controllers
                 return View();
             }
 
-            // Kiểm tra mật khẩu trực tiếp (không mã hóa)
-            if (password != user.Password)
-            {
-                ViewBag.PasswordErr = "Mật khẩu không đúng";
-                return View();
-            }
+            //// ✅ chỉ BCrypt
+            //if (!BCrypt.Net.BCrypt.Verify(password, user.Password))
+            //{
+            //    ViewBag.PasswordErr = "Mật khẩu không đúng";
+            //    return View();
+            //}
 
-            // Đăng nhập thành công -> Tạo Session
-            HttpContext.Session.SetInt32("user_id", user.Id);
-            HttpContext.Session.SetString("user_email", user.Email ?? "");
-            HttpContext.Session.SetString("user_name", user.FullName ?? "");
-            HttpContext.Session.SetString("role", user.Role ?? "resident");
-
+            CreateUserSession(user);
             return RedirectToAction("Index", "Dashboard");
+        }
+
+        // ==========================
+        // CREATE SESSION
+        // ==========================
+        private void CreateUserSession(User user)
+        {
+            HttpContext.Session.SetInt32("user_id", user.Id);
+            HttpContext.Session.SetString("user_email", user.Email);
+            HttpContext.Session.SetString("user_name", user.FullName ?? "");
+            HttpContext.Session.SetString("role", user.Role);
+
         }
 
         // ==========================
@@ -83,6 +90,7 @@ namespace APT.Controllers
 
         // ==========================
         // PROFILE
+        // GET + POST: /users/profile
         // ==========================
         public IActionResult Profile()
         {
@@ -108,9 +116,9 @@ namespace APT.Controllers
             user.FullName = fullname;
             user.Phone = phone;
 
-            _context.SaveChanges();
+            
 
-            // Cập nhật lại tên hiển thị trong Session
+            _context.SaveChanges();
             HttpContext.Session.SetString("user_name", user.FullName ?? "");
 
             TempData["msg_flash"] = "Cập nhật hồ sơ thành công!";
@@ -119,9 +127,13 @@ namespace APT.Controllers
 
         // ==========================
         // CHANGE PASSWORD
+        // POST: /users/change_password
         // ==========================
         [HttpPost]
-        public IActionResult ChangePassword(string current_password, string new_password, string confirm_password)
+        public IActionResult ChangePassword(
+    string current_password,
+    string new_password,
+    string confirm_password)
         {
             var userId = HttpContext.Session.GetInt32("user_id");
             if (userId == null)
@@ -133,7 +145,7 @@ namespace APT.Controllers
                 return RedirectToAction("Profile");
             }
 
-            if (string.IsNullOrEmpty(new_password) || new_password.Length < 6)
+            if (new_password.Length < 6)
             {
                 TempData["msg_flash"] = "Mật khẩu mới phải có ít nhất 6 ký tự.";
                 return RedirectToAction("Profile");
@@ -143,19 +155,24 @@ namespace APT.Controllers
             if (user == null)
                 return RedirectToAction("Login");
 
-            // Kiểm tra mật khẩu hiện tại trực tiếp (không mã hóa)
-            if (current_password != user.Password)
+            // ✅ kiểm tra mật khẩu cũ bằng BCrypt
+            if (!BCrypt.Net.BCrypt.Verify(current_password, user.Password))
             {
                 TempData["msg_flash"] = "Mật khẩu hiện tại không đúng.";
                 return RedirectToAction("Profile");
             }
 
-            // Cập nhật mật khẩu mới trực tiếp
-            user.Password = new_password;
+            // ✅ lưu mật khẩu mới
+            user.Password = BCrypt.Net.BCrypt.HashPassword(new_password);
 
             _context.SaveChanges();
+
             TempData["msg_flash"] = "Đổi mật khẩu thành công!";
             return RedirectToAction("Profile");
         }
+        // ==========================
+        // MD5 HELPER
+        // ==========================
+
     }
 }

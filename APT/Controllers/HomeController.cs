@@ -46,6 +46,5 @@ namespace APT.Controllers
                 ?? HttpContext.TraceIdentifier
             });
         }
-
     }
 }
