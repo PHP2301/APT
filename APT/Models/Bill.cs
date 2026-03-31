@@ -23,6 +23,7 @@ namespace APT.Models
         public DateTime CreatedAt { get; set; }
 
         // Navigation
+        [ForeignKey("RoomId")]
         public Apartment Apartment { get; set; } = null!;
     }
 }

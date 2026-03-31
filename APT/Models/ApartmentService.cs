@@ -16,7 +16,10 @@ namespace APT.Models
         public DateTime RegisteredAt { get; set; }
 
         // Navigation
+        [ForeignKey("ApartmentId")]
         public Apartment Apartment { get; set; } = null!;
+
+        [ForeignKey("ServiceId")]
         public Service Service { get; set; } = null!;
     }
 }
