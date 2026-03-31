@@ -132,3 +132,12 @@ body {
     border-radius: 15px;
     padding: 1.5rem;
 }
+/* Đảm bảo icon font awesome hiển thị đúng */
+.fa-solid, .fas {
+    display: inline-block !important;
+}
+
+.feature-icon i {
+    line-height: 1;
+    vertical-align: middle;
+}

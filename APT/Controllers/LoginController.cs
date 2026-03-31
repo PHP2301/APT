@@ -6,8 +6,8 @@ namespace APT.Controllers
     public class LoginController : Controller
     {
         // ADMIN HARD CODE
-        private const string ADMIN_EMAIL = "admin@gmail.com";
-        private const string ADMIN_PASSWORD = "123456";
+        private const string ADMIN_EMAIL = "1";
+        private const string ADMIN_PASSWORD = "1";
 
         public IActionResult Index()
         {

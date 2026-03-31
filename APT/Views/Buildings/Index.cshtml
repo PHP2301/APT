@@ -1,0 +1,77 @@
+﻿@model IEnumerable<APT.Models.Building>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<div class="min-h-screen bg-[#e9e4c9] py-8 px-4 md:px-10">
+    <div class="max-w-7xl mx-auto bg-[#e5c38d] rounded-[40px] p-8 shadow-2xl">
+
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-[#4a3728] text-2xl font-bold flex items-center gap-2">
+                <span class="bg-[#8b0000] p-2 rounded-lg text-white">🏢</span> Danh sách Tòa nhà
+            </h2>
+            <a asp-controller="Buildings" asp-action="Create"
+               class="bg-[#2ecc71] text-white px-4 py-2 rounded-lg font-bold hover:bg-[#27ae60] flex items-center gap-1 no-underline">
+                <span class="text-xl">+</span> Thêm Tòa Nhà
+            </a>
+        </div>
+
+        <div class="bg-white rounded-[30px] overflow-hidden shadow-lg">
+            <table class="w-full text-left">
+                <thead class="bg-[#d35400] text-white uppercase text-sm">
+                    <tr>
+                        <th class="py-4 px-6">Tên Tòa nhà</th>
+                        <th class="py-4 px-6 text-center">Mã (Prefix)</th>
+                        <th class="py-4 px-6 text-center">Số tầng</th>
+                        <th class="py-4 px-6 text-center">Hầm</th>
+                        <th class="py-4 px-6">Địa chỉ</th>
+                        <th class="py-4 px-6 text-center">Hành động</th>
+                    </tr>
+                </thead>
+                <tbody class="text-[#4a3728] font-medium">
+                    @foreach (var item in Model)
+                    {
+                        <tr class="border-b border-gray-100 hover:bg-orange-50">
+                            <td class="py-4 px-6 text-[#d35400] font-bold">@item.Name</td>
+                            <td class="py-4 px-6 text-center text-gray-500">[ @item.RoomPrefix ]</td>
+                            <td class="py-4 px-6 text-center">@item.TotalFloors</td>
+                            <td class="px-6 py-4 text-center">
+                                @if (item.Basements != null)
+                                {
+                                    @item.Basements.Count
+                                }
+                                else
+                                {
+                                    <span>0</span>
+                                }
+                            </td>
+                            <td class="py-4 px-6 text-xs text-gray-600 max-w-xs">@item.Address</td>
+                            <td class="px-4 py-4 text-center">
+                                <div class="flex justify-center gap-2">
+                                    <a asp-controller="Buildings" asp-action="Edit" asp-route-id="@item.Id"
+                                       class="bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 transition-all">
+                                        <i class="fa-solid fa-pen-to-square"></i>
+                                    </a>
+
+                                    <a asp-controller="Buildings" asp-action="Delete" asp-route-id="@item.Id"
+                                       onclick="return confirm('Bạn có chắc chắn muốn xóa tòa nhà này?')"
+                                       class="bg-red-500 text-white p-2 rounded-md hover:bg-red-600 transition-all">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mt-6">
+            <div class="mt-8">
+                <a asp-controller="Admin" asp-action="Dashboard"
+                   class="text-[#7f5539] font-bold hover:underline flex items-center gap-1 transition-all">
+                    ← Quay lại Trang chủ Admin
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

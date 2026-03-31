@@ -56,14 +56,13 @@ namespace APT.Controllers
                 return View();
             }
 
-            //// ✅ chỉ BCrypt
-            //if (!BCrypt.Net.BCrypt.Verify(password, user.Password))
-            //{
-            //    ViewBag.PasswordErr = "Mật khẩu không đúng";
-            //    return View();
-            //}
 
             CreateUserSession(user);
+            if (user.Role?.ToLower() == "admin")
+            {
+                // Nó sẽ tìm đến AdminController -> Action Dashboard
+                return RedirectToAction("Dashboard", "Admin");
+            }
             return RedirectToAction("Index", "Dashboard");
         }
 

@@ -1,0 +1,55 @@
+﻿@model APT.Models.Building
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Chỉnh sửa Tòa nhà";
+}
+<script src="https://cdn.tailwindcss.com"></script>
+
+<div class="min-h-screen bg-[#f5ebe0] py-10 px-4">
+    <div class="max-w-4xl mx-auto bg-[#ddb892] rounded-[40px] p-8 md:p-12 shadow-2xl">
+
+        <h2 class="text-[#8b0000] text-3xl font-bold text-center mb-10 uppercase">
+            Chỉnh sửa Tòa nhà: @Model.Name
+        </h2>
+
+        <form asp-action="Edit" method="post" class="space-y-6">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="Id" />
+
+            <div>
+                <label class="block text-[#4a3728] font-bold mb-2">Tên Tòa nhà *</label>
+                <input type="text" asp-for="Name" class="w-full px-5 py-3 rounded-xl border-none outline-none shadow-inner" required />
+            </div>
+
+            <div>
+                <label class="block text-[#4a3728] font-bold mb-1">Quy tắc đặt tên (Prefix)</label>
+                <input type="text" asp-for="RoomPrefix" class="w-full px-5 py-3 rounded-xl border-none outline-none shadow-inner" />
+            </div>
+
+            <div class="border-2 border-dashed border-[#b08968] rounded-2xl p-6 bg-[#ede0d4]/50">
+                <label class="flex items-center text-[#d35400] font-bold gap-2 mb-4">📍 Địa chỉ Tòa nhà *</label>
+                <input type="text" asp-for="Address" class="w-full px-5 py-3 rounded-xl border border-gray-300 outline-none" required />
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-[#4a3728] font-bold mb-2">Tổng số tầng *</label>
+                    <input type="number" asp-for="TotalFloors" class="w-full px-5 py-3 rounded-xl border-none text-center text-[#d35400] font-bold text-xl shadow-inner" required />
+                </div>
+                <div>
+                    <label class="block text-[#4a3728] font-bold mb-2">Số tầng hầm</label>
+                    <input type="number" asp-for="Basements" class="w-full px-5 py-3 rounded-xl border-none text-center font-bold text-xl shadow-inner" />
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center pt-8 border-t border-[#b08968]/30">
+                <button type="submit" class="bg-[#d35400] text-white px-10 py-3 rounded-2xl font-bold hover:bg-[#a04000] shadow-lg transition-all">
+                    💾 CẬP NHẬT
+                </button>
+                <a asp-action="Index" class="bg-[#adb5bd] text-white px-10 py-3 rounded-2xl font-bold hover:bg-[#6c757d] no-underline shadow-lg">
+                    ✖ Hủy
+                </a>
+            </div>
+        </form>
+    </div>
+</div>

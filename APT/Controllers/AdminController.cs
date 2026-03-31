@@ -1,24 +1,39 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using APT.Data;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace APT.Controllers
 {
     public class AdminController : BaseController
     {
-        public override void OnActionExecuting(ActionExecutingContext context)
-        {
-            if (Role != "admin")
-            {
-                context.Result = new RedirectToActionResult("Login", "Users", null);
-                return;
-            }
+        private readonly ApplicationDbContext _context;
 
-            base.OnActionExecuting(context);
+        public AdminController(ApplicationDbContext context)
+        {
+            _context = context;
         }
 
         public IActionResult Dashboard()
         {
-            ViewData["Title"] = "Admin Dashboard";
+            // Lấy dữ liệu từ Database
+            var totalBuildings = _context.Buildings.Count();
+            var totalRooms = _context.Apartments.Count();
+            var totalUsers = _context.Users.Count(); // 🔥 Thêm dòng này để đếm nhân sự
+
+            var chartData = _context.Buildings.Select(b => new {
+                name = b.Name,
+                total = _context.Apartments.Count(a => a.BuildingId == b.Id)
+            }).ToList();
+
+            // Cập nhật ViewBag.Data với đầy đủ các thuộc tính
+            ViewBag.Data = new
+            {
+                total_buildings = totalBuildings,
+                total_rooms = totalRooms,
+                total_users = totalUsers, // 🔥 Phải có dòng này thì View mới gọi được
+                chartData = chartData
+            };
+
             return View();
         }
     }
