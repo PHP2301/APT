@@ -1,0 +1,179 @@
+﻿@model APT.Models.Apartment
+@{
+    Layout = null;
+    var res = Model?.Resident;
+    // FIX: Xử lý Nullable cho decimal và int
+    decimal roomPrice = Model?.RentPrice ?? 0;
+    decimal managementPrice = (Model?.Area ?? 0) * 6000;
+    decimal vehiclePrice = (res?.Vehicles?.Count ?? 0) * 100000;
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <title>Hóa đơn phòng @Model.FullRoomName</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+</head>
+<body class="bg-[#f1f3f5] flex h-screen">
+
+    <aside class="w-64 bg-[#7d939e] p-8 text-white shrink-0">
+    </aside>
+
+    <main class="flex-1 p-8 overflow-y-auto">
+        <div class="bg-[#2c3e50] text-white px-6 py-3 rounded-t-2xl flex justify-between items-center">
+            <h2 class="font-bold uppercase text-sm">Phòng @Model.FullRoomName <span class="ml-2 bg-gray-400 px-2 py-0.5 rounded text-[10px]">Đang thuê</span></h2>
+            <a href="#" class="text-xs opacity-70">← Quay lại</a>
+        </div>
+
+        <div class="grid grid-cols-3 gap-6 mt-6">
+            <div class="col-span-2 space-y-6">
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-gray-500 text-xs uppercase italic tracking-widest"><i class="fa-solid fa-users mr-2"></i> Thông tin cư dân</h3>
+                        <button class="text-[10px] border px-3 py-1 rounded-lg font-bold text-gray-400"><i class="fa-solid fa-pen"></i> Cập nhật</button>
+                    </div>
+                    @if (res != null)
+                    {
+                        <div class="flex items-center gap-4">
+                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=@res.FullName" class="w-12 h-12 rounded-full border">
+                            <div>
+                                <p class="font-bold text-gray-800">@res.FullName <span class="bg-green-100 text-green-600 px-2 py-0.5 rounded text-[10px] ml-1">Chủ hộ</span></p>
+                                <p class="text-xs text-gray-400 font-medium"><i class="fa-solid fa-phone mr-1"></i> @res.phone</p>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                    <h3 class="font-bold text-gray-500 text-xs uppercase italic tracking-widest mb-4"><i class="fa-solid fa-droplet mr-2 text-blue-400"></i> Quản lý Nước T01</h3>
+                    <div class="flex gap-3 mb-6">
+                        <input type="number" id="waterUsage" oninput="updateWaterInvoice()" placeholder="Số mới (m3)" class="flex-1 px-4 py-2 bg-gray-50 rounded-xl border-none outline-none focus:ring-2 focus:ring-blue-200 text-sm font-bold">
+                        <button class="bg-blue-500 text-white px-4 rounded-xl shadow-lg shadow-blue-100"><i class="fa-solid fa-save"></i></button>
+                    </div>
+
+                    <table class="w-full text-xs font-bold text-gray-500">
+                        <tr class="border-b">
+                            <td class="py-2">Định mức 1 (4m3) - 9.125đ</td>
+                            <td class="text-right py-2" id="step1_val">0 đ</td>
+                        </tr>
+                        <tr class="border-b">
+                            <td class="py-2">Định mức 2 (2m3) - 18.000đ</td>
+                            <td class="text-right py-2" id="step2_val">0 đ</td>
+                        </tr>
+                        <tr class="border-b">
+                            <td class="py-2">Ngoài định mức - 19.786đ</td>
+                            <td class="text-right py-2" id="step3_val">0 đ</td>
+                        </tr>
+                        <tr>
+                            <td class="pt-4 uppercase tracking-widest">Tổng tiền nước</td>
+                            <td class="pt-4 text-right text-gray-800 text-base font-black" id="totalWaterText">0 đ</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="col-span-1 space-y-6">
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-gray-500 text-xs uppercase tracking-widest"><i class="fa-solid fa-car mr-2"></i> Phương tiện</h3>
+                        <span class="bg-purple-100 text-purple-600 px-2 py-0.5 rounded text-[10px] font-black">@(res?.Vehicles?.Count ?? 0) xe</span>
+                    </div>
+                    @if (res?.Vehicles != null)
+                    {
+                        @foreach (var v in res.Vehicles)
+                        {
+                            <div class="flex justify-between items-center text-xs font-bold text-gray-700 py-2 border-b border-dashed">
+                                <div><p>@v.LicensePlate</p><p class="text-[9px] text-gray-400 uppercase">@v.VehicleType</p></div>
+                                <div class="flex items-center gap-2"><span>100,000 đ</span><i class="fa-solid fa-xmark text-red-400"></i></div>
+                            </div>
+                        }
+                    }
+                </div>
+
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                    <h3 class="font-bold text-gray-500 text-xs uppercase tracking-widest mb-4"><i class="fa-solid fa-hand-holding-dollar mr-2"></i> Phí Quản lý</h3>
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div><label class="text-[9px] text-gray-400 uppercase font-black">Diện tích</label><p class="font-black text-gray-600">@Model.Area m2</p></div>
+                        <div><label class="text-[9px] text-gray-400 uppercase font-black">Đơn giá</label><p class="font-black text-gray-600">6,000 đ</p></div>
+                    </div>
+                    <div class="text-right border-t pt-4">
+                        <p class="text-[10px] text-gray-400 font-bold">Thành tiền: <span class="text-green-600 text-sm font-black">@managementPrice.ToString("N0") đ</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-8 bg-white rounded-[40px] shadow-xl border border-red-100 overflow-hidden">
+            <div class="bg-red-50 px-8 py-4 border-b border-red-100">
+                <h4 class="text-xs font-black text-red-500 uppercase tracking-widest"><i class="fa-solid fa-file-invoice mr-2"></i> Hóa đơn T01/2026 - Chưa thanh toán</h4>
+            </div>
+            <div class="p-10">
+                <div class="grid grid-cols-3 gap-y-6 text-xs font-bold text-gray-400">
+                    <div><i class="fa-solid fa-house"></i> Tiền phòng: <span class="text-gray-700">@roomPrice.ToString("N0") đ</span></div>
+                    <div><i class="fa-solid fa-droplet"></i> Tiền Nước: <span class="text-gray-700" id="billWaterText">0 đ</span></div>
+                    <div><i class="fa-solid fa-bolt"></i> Tiền Điện: <span class="text-gray-700 italic">Theo EVN</span></div>
+                    <div><i class="fa-solid fa-car"></i> Phí gửi xe: <span class="text-gray-700">@vehiclePrice.ToString("N0") đ</span></div>
+                    <div><i class="fa-solid fa-hand-holding-dollar"></i> Phí Quản lý: <span class="text-gray-700">@managementPrice.ToString("N0") đ</span></div>
+                </div>
+
+                <div class="mt-10 flex justify-between items-end border-t pt-8">
+                    <div>
+                        <p class="text-[10px] font-black text-gray-300 uppercase tracking-[4px] mb-1">Tổng cộng</p>
+                        <p class="text-4xl font-black text-red-500 tracking-tighter" id="grandTotalText">@((roomPrice + managementPrice + vehiclePrice).ToString("N0")) <span class="text-lg">đ</span></p>
+                    </div>
+                    <div class="flex gap-4">
+                        <button class="bg-green-500 text-white px-8 py-3 rounded-2xl font-black text-xs uppercase shadow-lg shadow-green-100 active:scale-95 transition-all"><i class="fa-solid fa-check-circle mr-2"></i> Xác nhận Thu</button>
+                        <button class="bg-gray-100 text-gray-400 px-8 py-3 rounded-2xl font-black text-xs uppercase"><i class="fa-solid fa-print mr-2"></i> Hóa đơn</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Các hằng số phí cố định từ Model
+        const roomPrice = @roomPrice;
+        const managementPrice = @managementPrice;
+        const vehiclePrice = @vehiclePrice;
+
+        function updateWaterInvoice() {
+            const usage = parseInt(document.getElementById('waterUsage').value) || 0;
+
+            // Định mức & Đơn giá (Theo ảnh Đại Ca gửi)
+            const rate1 = 9125;
+            const rate2 = 18000;
+            const rate3 = 19786;
+
+            let step1 = 0, step2 = 0, step3 = 0;
+
+            // Tính toán bậc thang
+            if (usage <= 4) {
+                step1 = usage * rate1;
+            } else if (usage <= 6) {
+                step1 = 4 * rate1;
+                step2 = (usage - 4) * rate2;
+            } else {
+                step1 = 4 * rate1;
+                step2 = 2 * rate2;
+                step3 = (usage - 6) * rate3;
+            }
+
+            const totalWater = step1 + step2 + step3;
+
+            // Cập nhật giao diện bảng nước
+            document.getElementById('step1_val').innerText = step1.toLocaleString('vi-VN') + " đ";
+            document.getElementById('step2_val').innerText = step2.toLocaleString('vi-VN') + " đ";
+            document.getElementById('step3_val').innerText = step3.toLocaleString('vi-VN') + " đ";
+            document.getElementById('totalWaterText').innerText = totalWater.toLocaleString('vi-VN') + " đ";
+
+            // Cập nhật giao diện hóa đơn tổng
+            document.getElementById('billWaterText').innerText = totalWater.toLocaleString('vi-VN') + " đ";
+
+            const grandTotal = roomPrice + managementPrice + vehiclePrice + totalWater;
+            document.getElementById('grandTotalText').innerHTML = grandTotal.toLocaleString('vi-VN') + ' <span class="text-lg">đ</span>';
+        }
+    </script>
+</body>
+</html>

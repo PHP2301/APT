@@ -1,0 +1,148 @@
+﻿@model APT.Models.Resident
+@{
+    Layout = null;
+    // Lấy building_id từ ViewBag (đã sửa tên biến cho đồng bộ)
+    int bId = ViewBag.building_id ?? 0;
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <title>Chỉnh sửa cư dân - @Model?.FullName</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        .sidebar-bg {
+            background-color: #7d939e;
+        }
+
+        .btn-orange {
+            background-color: #d35400;
+        }
+    </style>
+</head>
+<body class="flex h-screen bg-[#f1f3f5]">
+
+    <aside class="w-64 sidebar-bg flex flex-col items-center py-8 px-4 text-white shrink-0 shadow-2xl">
+        <div class="w-20 h-20 rounded-full border-4 border-white overflow-hidden mb-4 bg-white">
+            <img src="https://api.dicebear.com/7.x/adventurer/svg?seed=@Model?.FullName" alt="Avatar">
+        </div>
+        <p class="font-bold text-sm mb-8 uppercase tracking-widest text-center">@Model?.FullName</p>
+        <div class="w-full space-y-2">
+            <a asp-controller="Dashboard" asp-action="Index" class="flex items-center gap-3 w-full py-2.5 px-6 bg-white text-gray-500 rounded-full font-bold no-underline text-sm shadow-sm hover:bg-gray-100 transition-all">
+                <i class="fa-solid fa-house"></i> Trang chủ
+            </a>
+            @* Sửa buildingId -> building_id *@
+            <a asp-action="ListByBuilding" asp-route-building_id="@bId" class="flex items-center gap-3 w-full py-2.5 px-6 bg-[#d35400] text-white rounded-full font-bold no-underline text-sm shadow-lg">
+                <i class="fa-solid fa-users"></i> Danh sách Cư dân
+            </a>
+        </div>
+    </aside>
+
+    <main class="flex-1 p-8 overflow-y-auto flex justify-center items-center">
+        <div class="w-full max-w-4xl bg-white rounded-[40px] shadow-2xl p-10 border-t-[8px] border-orange-500 relative">
+
+            <div class="text-center mb-10">
+                <h2 class="text-3xl font-black text-[#d35400] uppercase flex items-center justify-center gap-3 tracking-tighter">
+                    <i class="fa-solid fa-user-pen"></i> Chỉnh sửa thông tin Cư dân
+                </h2>
+                <p class="text-xs text-gray-400 font-bold mt-1 uppercase tracking-widest opacity-60">Cập nhật hồ sơ & Quản lý phương tiện</p>
+            </div>
+
+            <form asp-action="Edit" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="Id" />
+                <input type="hidden" name="building_id" value="@bId" />
+
+                <div class="grid grid-cols-2 gap-8 mb-6">
+                    <div>
+                        <label class="block text-[11px] font-black text-gray-400 uppercase mb-2 ml-1">Họ và tên *</label>
+                        <input type="text" asp-for="FullName" class="w-full px-5 py-3 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-4 focus:ring-orange-100 focus:border-orange-400 transition-all text-sm font-bold text-gray-700" required />
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-black text-gray-400 uppercase mb-2 ml-1">Số điện thoại *</label>
+                        <input type="text" asp-for="phone" class="w-full px-5 py-3 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-4 focus:ring-orange-100 focus:border-orange-400 transition-all text-sm font-bold text-gray-700" required />
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-8 mb-6">
+                    <div>
+                        @* Sửa Cid -> id_card *@
+                        <label class="block text-[11px] font-black text-gray-400 uppercase mb-2 ml-1">CCCD / CMND (id_card) *</label>
+                        <input type="text" asp-for="id_card" class="w-full px-5 py-3 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-4 focus:ring-orange-100 focus:border-orange-400 transition-all text-sm font-bold text-gray-700" required />
+                    </div>
+                    <div>
+                        @* Sửa Email -> email *@
+                        <label class="block text-[11px] font-black text-gray-400 uppercase mb-2 ml-1">Email liên hệ *</label>
+                        <input type="email" asp-for="email" class="w-full px-5 py-3 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-4 focus:ring-orange-100 focus:border-orange-400 transition-all text-sm font-bold text-gray-700" required />
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-8 mb-10">
+                    <div>
+                        <label class="block text-[11px] font-black text-gray-400 uppercase mb-2 ml-1">Ngày sinh (dob)</label>
+                        <input type="date" asp-for="dob" class="w-full px-5 py-3 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-4 focus:ring-orange-100 focus:border-orange-400 transition-all text-sm font-bold text-gray-700" />
+                    </div>
+                    <div>
+                        @* Sửa Gender -> gender *@
+                        <label class="block text-[11px] font-black text-gray-400 uppercase mb-2 ml-1">Giới tính</label>
+                        <select asp-for="gender" class="w-full px-5 py-3 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-4 focus:ring-orange-100 focus:border-orange-400 transition-all text-sm font-bold text-gray-700">
+                            <option value="Nam">Nam</option>
+                            <option value="Nữ">Nữ</option>
+                            <option value="Khác">Khác</option>
+                        </select>
+                    </div>
+                </div>
+
+                @* Phần Đăng ký phương tiện *@
+                <div class="bg-amber-50/50 border-2 border-dashed border-amber-200 rounded-[30px] p-8 mb-10">
+                    <h4 class="text-sm font-black text-[#d35400] mb-6 flex items-center gap-2 uppercase tracking-tighter">
+                        <i class="fa-solid fa-motorcycle text-xl"></i> Đăng ký phương tiện mới
+                    </h4>
+                    <div class="grid grid-cols-2 gap-6">
+                        <div class="col-span-1">
+                            <label class="block text-[10px] font-black text-amber-500 uppercase mb-2 ml-1">Loại xe</label>
+                            <select name="VehicleType" class="w-full px-5 py-3 bg-white border border-amber-100 rounded-xl outline-none focus:ring-4 focus:ring-amber-100 text-sm font-bold">
+                                <option value="motorbike">Xe máy</option>
+                                <option value="car">Ô tô</option>
+                            </select>
+                        </div>
+                        <div class="col-span-1">
+                            <label class="block text-[10px] font-black text-amber-500 uppercase mb-2 ml-1">Biển số xe</label>
+                            <input type="text" name="LicensePlate" placeholder="VD: 59-X1 123.45" class="w-full px-5 py-3 bg-white border border-amber-100 rounded-xl outline-none focus:ring-4 focus:ring-amber-100 text-sm font-bold" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center pt-8 border-t border-gray-100">
+                    <button type="button" onclick="confirmDelete(@Model?.Id)" class="text-rose-500 text-[11px] font-black uppercase tracking-widest px-6 py-2 border border-rose-100 rounded-xl hover:bg-rose-50 transition-all">
+                        <i class="fa-solid fa-user-minus mr-1"></i> Xóa cư dân
+                    </button>
+
+                    <div class="flex gap-4">
+                        <a asp-action="ListByBuilding" asp-route-building_id="@bId" class="px-10 py-3 bg-gray-100 text-gray-500 rounded-2xl font-black text-[11px] uppercase tracking-widest no-underline hover:bg-gray-200 transition-all">Hủy bỏ</a>
+                        <button type="submit" class="px-10 py-3 btn-orange text-white rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-xl shadow-orange-200 hover:opacity-90 active:scale-95 transition-all">
+                            <i class="fa-solid fa-check-double mr-2"></i> Lưu & Cập nhật
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    @* Form ẩn để xử lý xóa *@
+    <form id="deleteForm" asp-action="Delete" method="post" style="display:none;">
+        <input type="hidden" name="id" id="deleteId" />
+    </form>
+
+    <script>
+        function confirmDelete(id) {
+            if (confirm("Đại Ca có chắc muốn xóa cư dân này không? Mọi căn hộ của họ sẽ trở về trạng thái trống!")) {
+                document.getElementById('deleteId').value = id;
+                document.getElementById('deleteForm').submit();
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,127 @@
+﻿@model IEnumerable<APT.Models.User>
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Quản lý nhân sự";
+}
+<script src="https://cdn.tailwindcss.com"></script>
+
+<div class="min-h-screen bg-[#f5ebe0] py-8 px-4">
+    <a asp-controller="Dashboard" asp-action="Index" class="text-[#7f5539] font-bold no-underline hover:underline mb-4 inline-block flex items-center gap-2">
+        <i class="fa-solid fa-arrow-left"></i> Quay lại bảng điều khiển
+    </a>
+
+    <div class="max-w-7xl mx-auto bg-[#ddb892] rounded-[40px] p-8 shadow-2xl">
+        <div class="text-center mb-8">
+            <h2 class="text-[#8b0000] text-3xl font-bold flex items-center justify-center gap-3">
+                <i class="fa-solid fa-users-gear"></i> Quản lý Nhân sự Hệ thống
+            </h2>
+            <p class="text-[#4a3728] text-sm font-bold mt-2 uppercase tracking-widest">
+                Đơn vị vận hành: IDICO Apartment Group
+            </p>
+        </div>
+
+        <div class="grid grid-cols-12 gap-8">
+            <div class="col-span-12 lg:col-span-4 bg-white rounded-[30px] p-6 shadow-xl h-fit border-t-8 border-[#d35400]">
+                <h3 class="text-[#4a3728] font-bold mb-6 flex items-center gap-2 text-xl">
+                    <i class="fa-solid fa-user-plus text-[#d35400]"></i> Thêm Manager mới
+                </h3>
+
+                <form asp-controller="Dashboard" asp-action="AddManager" method="post" class="space-y-5">
+                    @Html.AntiForgeryToken()
+
+                    <div>
+                        <label class="block text-sm font-bold text-[#4a3728] mb-1">Họ và Tên *</label>
+                        <input type="text" name="FullName" placeholder="Nhập họ tên đầy đủ..."
+                               class="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-[#d35400] transition-all" required />
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-bold text-[#4a3728] mb-1">Số điện thoại (Tên đăng nhập) *</label>
+                        <input type="text" name="Phone" placeholder="Nhập đúng 10 số dùng để login..."
+                               class="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-[#d35400] transition-all" required />
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-bold text-[#4a3728] mb-1">Email liên hệ *</label>
+                        <input type="email" name="Email" placeholder="VD: manager@idico.com"
+                               class="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-[#d35400] transition-all" required />
+                    </div>
+
+                    <div class="bg-orange-50 p-4 rounded-2xl border border-orange-200">
+                        <p class="text-xs text-[#d35400] leading-relaxed">
+                            <i class="fa-solid fa-circle-info"></i> <strong>Lưu ý:</strong> Tài khoản mới tạo sẽ có mật khẩu mặc định là <span class="bg-white px-2 py-0.5 rounded font-bold shadow-sm">Quanly@@123</span>. Hãy yêu cầu nhân sự đổi mật khẩu sau khi nhận máy.
+                        </p>
+                    </div>
+
+                    <button type="submit" class="w-full bg-[#d35400] text-white py-4 rounded-2xl font-bold hover:bg-[#a04000] shadow-lg hover:shadow-orange-200/50 transition-all flex items-center justify-center gap-2 text-lg">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> Lưu & Cấp quyền
+                    </button>
+                </form>
+
+                <div class="mt-6 text-center">
+                    <button class="text-green-700 font-bold text-sm hover:underline flex items-center justify-center gap-2 w-full">
+                        <i class="fa-solid fa-file-csv text-lg"></i> Nhập danh sách từ Excel (.csv)
+                    </button>
+                </div>
+            </div>
+
+            <div class="col-span-12 lg:col-span-8">
+                <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+                    <h3 class="text-[#4a3728] font-bold text-xl">Danh sách nhân sự đang quản lý</h3>
+                    <div class="relative w-full md:w-72">
+                        <input type="text" placeholder="Tìm tên, SĐT hoặc email..."
+                               class="w-full pl-12 pr-4 py-3 rounded-full border-none outline-none shadow-md text-sm focus:ring-2 focus:ring-[#d35400]" />
+                        <i class="fa-solid fa-magnifying-glass absolute left-5 top-4 text-gray-400"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-[30px] shadow-2xl overflow-hidden border border-gray-100">
+                    <table class="w-full text-sm text-left">
+                        <thead class="bg-[#d35400] text-white uppercase text-xs tracking-wider">
+                            <tr>
+                                <th class="px-6 py-5">Tên Manager</th>
+                                <th class="px-6 py-5 text-center">Số điện thoại</th>
+                                <th class="px-6 py-5">Email</th>
+                                <th class="px-6 py-5 text-center">Trạng thái</th>
+                                <th class="px-6 py-5 text-center">Tác vụ</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100 font-medium">
+                            @foreach (var item in Model)
+                            {
+                                <tr class="hover:bg-orange-50/50 transition-colors">
+                                    <td class="px-6 py-5 font-bold text-[#d35400]">@item.FullName</td>
+                                    <td class="px-6 py-5 text-center text-gray-600">@item.Phone</td>
+                                    <td class="px-6 py-5 text-gray-500">@item.Email</td>
+                                    <td class="px-6 py-5 text-center">
+                                        <span class="bg-teal-500 text-white px-3 py-1 rounded-full text-[10px] font-bold shadow-sm">
+                                            ĐANG HOẠT ĐỘNG
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-5 text-center">
+                                        <div class="flex justify-center gap-3">
+                                            <button class="text-blue-500 hover:scale-125 transition-transform" title="Sửa">
+                                                <i class="fa-solid fa-user-pen text-lg"></i>
+                                            </button>
+                                            <button class="text-red-500 hover:scale-125 transition-transform" title="Khóa tài khoản">
+                                                <i class="fa-solid fa-user-slash text-lg"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="flex justify-center md:justify-end gap-2 mt-8">
+                    <button class="px-4 py-2 text-gray-500 font-bold hover:text-[#d35400]">Trước</button>
+                    <button class="w-10 h-10 bg-[#d35400] text-white rounded-xl font-bold shadow-lg shadow-orange-200">1</button>
+                    <button class="w-10 h-10 bg-white text-[#4a3728] rounded-xl font-bold hover:bg-orange-100 transition-all">2</button>
+                    <button class="w-10 h-10 bg-white text-[#4a3728] rounded-xl font-bold hover:bg-orange-100 transition-all">3</button>
+                    <button class="px-4 py-2 text-[#4a3728] font-bold hover:text-[#d35400]">Sau</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -17,7 +17,8 @@ namespace APT.Models
         public string Role { get; set; } = null!;
 
         [Column("created_at")]
-        public DateTime CreatedAt { get; set; }
+        // Tự động gán thời gian hiện tại nếu không có giá trị truyền vào
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
     }
 
 }

@@ -3,11 +3,7 @@ using Microsoft.AspNetCore.Http;
 using APT.Data;
 using APT.Models;
 using System.Linq;
-using System.Security.Cryptography;
-using System.Text;
-using System.IO;
 using Microsoft.EntityFrameworkCore;
-
 
 namespace APT.Controllers
 {
@@ -22,11 +18,9 @@ namespace APT.Controllers
 
         // ==========================
         // LOGIN
-        // GET + POST: /users/login
         // ==========================
         public IActionResult Login()
         {
-            // Đã login → đá về dashboard
             if (HttpContext.Session.GetInt32("user_id") != null)
                 return RedirectToAction("Index", "Dashboard");
 
@@ -48,39 +42,45 @@ namespace APT.Controllers
                 return View();
             }
 
-            var user = _context.Users.FirstOrDefault(u => u.Email == email);
+            // TÌM USER KHỚP CẢ EMAIL VÀ PASSWORD (PLAIN TEXT)
+            var user = _context.Users.FirstOrDefault(u => u.Email == email && u.Password == password);
 
             if (user == null)
             {
-                ViewBag.EmailErr = "Email không tồn tại";
+                // Kiểm tra xem do sai Email hay sai Pass để báo cho chuẩn
+                var checkEmail = _context.Users.Any(u => u.Email == email);
+                if (!checkEmail)
+                {
+                    ViewBag.EmailErr = "Email không tồn tại";
+                }
+                else
+                {
+                    ViewBag.PasswordErr = "Mật khẩu không chính xác";
+                }
                 return View();
             }
 
-
+            // TẠO SESSION VÀ ĐIỀU HƯỚNG
             CreateUserSession(user);
-            if (user.Role?.ToLower() == "admin")
+
+            // Điều hướng dựa trên Role
+            string role = user.Role?.ToLower() ?? "";
+            if (role == "admin" || role == "super_admin")
             {
-                // Nó sẽ tìm đến AdminController -> Action Dashboard
-                return RedirectToAction("Dashboard", "Admin");
+                return RedirectToAction("Index", "Dashboard"); // Sẽ vào AdminDashboard trong DashboardController
             }
-            return RedirectToAction("Index", "Dashboard");
+
+            return RedirectToAction("Index", "Dashboard"); // Sẽ vào ManagerDashboard hoặc ResidentDashboard
         }
 
-        // ==========================
-        // CREATE SESSION
-        // ==========================
         private void CreateUserSession(User user)
         {
             HttpContext.Session.SetInt32("user_id", user.Id);
             HttpContext.Session.SetString("user_email", user.Email);
             HttpContext.Session.SetString("user_name", user.FullName ?? "");
-            HttpContext.Session.SetString("role", user.Role);
-
+            HttpContext.Session.SetString("role", user.Role ?? "resident");
         }
 
-        // ==========================
-        // LOGOUT
-        // ==========================
         public IActionResult Logout()
         {
             HttpContext.Session.Clear();
@@ -89,89 +89,62 @@ namespace APT.Controllers
 
         // ==========================
         // PROFILE
-        // GET + POST: /users/profile
         // ==========================
         public IActionResult Profile()
         {
-            var userId = HttpContext.Session.GetInt32("user_id");
-            if (userId == null)
-                return RedirectToAction("Login");
+            var user_id = HttpContext.Session.GetInt32("user_id");
+            if (user_id == null) return RedirectToAction("Login");
 
-            var user = _context.Users.Find(userId);
+            var user = _context.Users.Find(user_id);
             return View(user);
         }
 
         [HttpPost]
         public IActionResult Profile(string fullname, string phone)
         {
-            var userId = HttpContext.Session.GetInt32("user_id");
-            if (userId == null)
-                return RedirectToAction("Login");
+            var user_id = HttpContext.Session.GetInt32("user_id");
+            if (user_id == null) return RedirectToAction("Login");
 
-            var user = _context.Users.Find(userId);
-            if (user == null)
-                return RedirectToAction("Login");
-
-            user.FullName = fullname;
-            user.Phone = phone;
-
-            
-
-            _context.SaveChanges();
-            HttpContext.Session.SetString("user_name", user.FullName ?? "");
-
-            TempData["msg_flash"] = "Cập nhật hồ sơ thành công!";
+            var user = _context.Users.Find(user_id);
+            if (user != null)
+            {
+                user.FullName = fullname;
+                user.Phone = phone;
+                _context.SaveChanges();
+                HttpContext.Session.SetString("user_name", user.FullName ?? "");
+                TempData["msg_flash"] = "Cập nhật hồ sơ thành công!";
+            }
             return RedirectToAction("Profile");
         }
 
         // ==========================
-        // CHANGE PASSWORD
-        // POST: /users/change_password
+        // CHANGE PASSWORD (KHÔNG MÃ HÓA)
         // ==========================
         [HttpPost]
-        public IActionResult ChangePassword(
-    string current_password,
-    string new_password,
-    string confirm_password)
+        public IActionResult ChangePassword(string current_password, string new_password, string confirm_password)
         {
-            var userId = HttpContext.Session.GetInt32("user_id");
-            if (userId == null)
-                return RedirectToAction("Login");
+            int user_id = HttpContext.Session.GetInt32("user_id") ?? 0;
+            var user = _context.Users.Find(user_id);
 
-            if (new_password != confirm_password)
-            {
-                TempData["msg_flash"] = "Mật khẩu xác nhận không khớp.";
-                return RedirectToAction("Profile");
-            }
+            if (user == null) return RedirectToAction("Login");
 
-            if (new_password.Length < 6)
-            {
-                TempData["msg_flash"] = "Mật khẩu mới phải có ít nhất 6 ký tự.";
-                return RedirectToAction("Profile");
-            }
-
-            var user = _context.Users.Find(userId);
-            if (user == null)
-                return RedirectToAction("Login");
-
-            // ✅ kiểm tra mật khẩu cũ bằng BCrypt
-            if (!BCrypt.Net.BCrypt.Verify(current_password, user.Password))
+            if (current_password != user.Password)
             {
                 TempData["msg_flash"] = "Mật khẩu hiện tại không đúng.";
                 return RedirectToAction("Profile");
             }
 
-            // ✅ lưu mật khẩu mới
-            user.Password = BCrypt.Net.BCrypt.HashPassword(new_password);
+            if (new_password != confirm_password)
+            {
+                TempData["msg_flash"] = "Mật khẩu mới và xác nhận không khớp.";
+                return RedirectToAction("Profile");
+            }
 
+            user.Password = new_password;
             _context.SaveChanges();
 
             TempData["msg_flash"] = "Đổi mật khẩu thành công!";
             return RedirectToAction("Profile");
         }
-        // ==========================
-        // MD5 HELPER
-        // ==========================
-
     }
 }

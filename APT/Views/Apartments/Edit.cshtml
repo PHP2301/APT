@@ -1,0 +1,119 @@
+﻿@model APT.Models.Apartment
+@{
+    Layout = null;
+    // Sử dụng building_id viết thường
+    var bId = Model?.building_id ?? 0;
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <title>Chỉnh sửa Căn hộ - @Model?.full_room_name</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        .sidebar-bg {
+            background-color: #7d939e;
+        }
+
+        input:focus, select:focus {
+            border-color: #28a745 !important;
+        }
+    </style>
+</head>
+<body class="flex h-screen bg-[#f8f9fa] font-sans">
+
+    <aside class="w-64 sidebar-bg flex flex-col items-center py-8 px-4 text-white shrink-0 shadow-2xl">
+        <div class="w-20 h-20 rounded-full border-4 border-white overflow-hidden mb-4 bg-white">
+            <img src="https://api.dicebear.com/7.x/adventurer/svg?seed=@Model?.full_room_name" alt="Avatar">
+        </div>
+        <p class="font-bold text-sm mb-8 uppercase tracking-widest text-center">Quản lý viên</p>
+
+        <div class="w-full space-y-2">
+            <a asp-controller="Dashboard" asp-action="Index" class="flex items-center gap-3 w-full py-2.5 px-6 bg-white text-gray-500 rounded-full font-bold no-underline text-sm shadow-sm hover:bg-gray-100 transition-all">
+                <i class="fa-solid fa-house"></i> Trang chủ
+            </a>
+            <p class="text-[10px] uppercase font-black tracking-widest mt-6 mb-2 opacity-60 px-4">Tòa nhà & Căn hộ</p>
+            <a asp-controller="Apartments" asp-action="Index" asp-route-building_id="@bId" class="flex items-center gap-3 w-full py-2.5 px-6 bg-[#d35400] text-white rounded-full font-bold no-underline text-sm shadow-lg hover:scale-105 transition-all">
+                <i class="fa-solid fa-door-open"></i> Danh sách Phòng
+            </a>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col items-center justify-center p-10 overflow-y-auto">
+        <div class="bg-white rounded-[30px] shadow-2xl w-full max-w-2xl border-t-[8px] border-[#28a745] p-10 relative">
+
+            <div class="text-center mb-10">
+                <div class="inline-flex items-center justify-center w-16 h-16 bg-green-50 text-[#28a745] rounded-full mb-4">
+                    <i class="fa-solid fa-building-circle-check text-2xl"></i>
+                </div>
+                <h2 class="text-3xl font-black text-gray-800 tracking-tight">Chỉnh sửa Căn hộ</h2>
+                <p class="text-sm text-gray-400 font-medium mt-2">
+                    Mã phòng: <span class="text-[#28a745] font-bold">@Model?.full_room_name</span>
+                </p>
+            </div>
+
+            <form asp-controller="Apartments" asp-action="Edit" method="post" class="space-y-6">
+                @Html.AntiForgeryToken()
+
+                <input type="hidden" asp-for="Id" />
+                <input type="hidden" asp-for="building_id" />
+
+                <div class="grid grid-cols-2 gap-8">
+                    @* 1. Loại phòng (Sửa thành room_type) *@
+                    <div class="space-y-2">
+                        <label class="text-xs font-black text-gray-400 uppercase ml-1">Loại phòng</label>
+                        <select asp-for="room_type" class="w-full px-5 py-3 rounded-2xl border-2 border-gray-100 bg-gray-50 text-sm font-bold text-gray-700 outline-none transition-all">
+                            <option value="Studio">Studio</option>
+                            <option value="1 Bedroom">1 Bedroom</option>
+                            <option value="2 Bedrooms">2 Bedrooms</option>
+                            <option value="Penthouse">Penthouse</option>
+                        </select>
+                    </div>
+
+                    @* 2. Diện tích (Area) *@
+                    <div class="space-y-2">
+                        <label class="text-xs font-black text-gray-400 uppercase ml-1">Diện tích (m²)</label>
+                        <div class="relative">
+                            <input asp-for="Area" type="number" step="0.1" class="w-full px-5 py-3 rounded-2xl border-2 border-gray-100 bg-gray-50 text-sm font-bold text-gray-700 outline-none" />
+                            <span class="absolute right-4 top-3 text-gray-300 text-xs font-bold">M2</span>
+                        </div>
+                    </div>
+
+                    @* 3. Giá thuê (Sửa thành rent_price) *@
+                    <div class="space-y-2">
+                        <label class="text-xs font-black text-gray-400 uppercase ml-1">Giá thuê (VNĐ)</label>
+                        <div class="relative">
+                            <input asp-for="rent_price" type="number" class="w-full px-5 py-3 rounded-2xl border-2 border-gray-100 bg-gray-50 text-sm font-black text-[#28a745] outline-none" />
+                            <i class="fa-solid fa-money-bill-wave absolute right-4 top-4 text-green-200"></i>
+                        </div>
+                    </div>
+
+                    @* 4. Trạng thái (Status) *@
+                    <div class="space-y-2">
+                        <label class="text-xs font-black text-gray-400 uppercase ml-1">Trạng thái</label>
+                        <select asp-for="Status" class="w-full px-5 py-3 rounded-2xl border-2 border-gray-100 bg-gray-50 text-sm font-bold text-gray-700 outline-none">
+                            <option value="Available">🟢 Trống (Available)</option>
+                            <option value="Maintenance">🟡 Bảo trì (Maintenance)</option>
+                            <option value="Occupied">🔴 Đang ở (Occupied)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex flex-col sm:flex-row justify-center gap-4 pt-8">
+                    <a asp-controller="Apartments" asp-action="Index" asp-route-building_id="@bId"
+                       class="order-2 sm:order-1 px-10 py-3 bg-gray-100 text-gray-500 rounded-2xl font-bold text-sm hover:bg-gray-200 transition-all text-center no-underline">
+                        Hủy bỏ
+                    </a>
+
+                    <button type="submit" class="order-1 sm:order-2 px-10 py-3 bg-[#28a745] text-white rounded-2xl font-bold text-sm shadow-[0_10px_20px_rgba(40,167,69,0.3)] hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> Lưu thay đổi
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+</body>
+</html>

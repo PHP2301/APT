@@ -1,13 +1,15 @@
-﻿@{
+﻿@using System.Text.Json
+@{
     Layout = "_Layout";
     ViewData["Title"] = "Bảng Điều Khiển Admin";
-    // Đảm bảo dữ liệu không bị null để tránh lỗi RuntimeBinderException
+
+    // Đảm bảo dữ liệu không bị null để tránh lỗi JS
     var data = ViewBag.Data ?? new
     {
         total_buildings = 0,
         total_rooms = 0,
         total_users = 0,
-        chartData = new List<dynamic>()
+        chartData = new List<object>()
     };
 }
 
@@ -15,7 +17,6 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 
 <style>
-    /* Custom Styles bổ sung cho đồng bộ với file site.css của bạn */
     .dashboard-wrapper {
         background-color: #E5C38D;
         border-radius: 40px;
@@ -33,26 +34,39 @@
     .feature-box {
         background-color: white;
         border-radius: 35px;
-        padding: 2rem;
+        padding: 2.5rem 2rem;
         text-align: center;
         border: 2px solid transparent;
+        height: 100%;
+        position: relative;
+        z-index: 1;
     }
 
-    .feature-icon i {
-        font-size: 4rem;
-        margin-bottom: 1rem;
-    }
-
+    /* LỚP CẤP CỨU CHO NÚT BẤM */
     .btn-access {
         display: block;
         width: 100%;
-        padding: 0.75rem;
+        padding: 0.85rem;
         color: white !important;
         border-radius: 9999px;
         font-weight: bold;
         text-align: center;
-        transition: 0.3s;
-        margin-top: auto;
+        text-decoration: none !important;
+        transition: all 0.2s ease-in-out;
+        cursor: pointer !important;
+        position: relative;
+        z-index: 50 !important; /* Đảm bảo nằm trên mọi lớp đè */
+        pointer-events: auto !important;
+    }
+
+        .btn-access:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+    .feature-icon i {
+        font-size: 3.5rem;
+        margin-bottom: 1rem;
     }
 </style>
 
@@ -87,7 +101,7 @@
                 </div>
 
                 <div class="bg-white rounded-[35px] p-6 shadow-xl flex-grow flex flex-col items-center">
-                    <h6 class="font-bold mb-4 text-[#8B0000] text-lg">Tỷ lệ phòng theo Tòa nhà</h6>
+                    <h6 class="font-bold mb-4 text-[#8B0000] text-lg text-center">Tỷ lệ phòng theo Tòa nhà</h6>
                     <div class="relative w-full h-[280px]">
                         <canvas id="apartmentChart"></canvas>
                     </div>
@@ -96,39 +110,43 @@
 
             <div class="col-span-12 lg:col-span-8 grid grid-cols-1 md:grid-cols-3 gap-6">
 
-                <div class="feature-box shadow-xl flex flex-col hover:border-[#D35400] transition-all">
-                    <div class="feature-icon text-[#D35400]">
-                        <i class="fa-solid fa-city"></i>
+                <div class="feature-box shadow-xl flex flex-col justify-between hover:border-[#D35400] transition-all group relative">
+                    <div class="mb-4">
+                        <div class="feature-icon text-[#D35400]"><i class="fa-solid fa-city"></i></div>
+                        <h5 class="text-[#4a3728] font-bold text-xl mb-4 uppercase">Quản Lý Tòa nhà</h5>
+                        <p class="text-sm text-gray-500 mb-6">Xem danh sách các Block A, B, C và thiết lập cấu trúc tòa nhà.</p>
                     </div>
-                    <h5 class="text-[#4a3728] font-bold text-xl mb-4">Quản Lý Tòa nhà</h5>
-                    <p class="text-sm text-gray-500 mb-6">Thiết lập danh sách tòa nhà, số tầng, hầm và cấu trúc phòng.</p>
-                    <a asp-controller="Buildings" asp-action="Index" class="btn-access bg-[#D35400] hover:bg-[#a04000] no-underline">
+                    @* TRỎ VỀ ĐÂY: Trang ChooseBuilding (Có ảnh các Block) *@
+                    <a asp-controller="Buildings" asp-action="ChooseBuilding"
+                       class="btn-access bg-[#D35400] hover:bg-[#a04000] no-underline relative z-10">
                         ➜ Truy cập
                     </a>
                 </div>
 
-                <div class="feature-box shadow-xl flex flex-col hover:border-[#0d9488] transition-all">
-                    <div class="feature-icon text-[#0d9488]">
-                        <i class="fa-solid fa-door-open"></i>
+                <div class="feature-box shadow-xl flex flex-col justify-between hover:border-[#0d9488] transition-all group relative">
+                    <div class="mb-4">
+                        <div class="feature-icon text-[#0d9488]"><i class="fa-solid fa-door-open"></i></div>
+                        <h5 class="text-[#4a3728] font-bold text-xl mb-4 uppercase">Quản Lý Căn hộ</h5>
+                        <p class="text-sm text-gray-500 mb-6">Quản lý chi tiết từng phòng, giá thuê và cư dân bên trong.</p>
                     </div>
-                    <h5 class="text-[#4a3728] font-bold text-xl mb-4">Quản Lý Căn hộ</h5>
-                    <p class="text-sm text-gray-500 mb-6">Quản lý danh sách phòng, giá thuê, trạng thái và tạo phòng hàng loạt.</p>
-                    <a asp-controller="Apartments" asp-action="Index" class="btn-access bg-[#0d9488] hover:bg-[#0a6b62] no-underline">
+                    @* CŨNG TRỎ VỀ ĐÂY: Vì phải chọn Tòa nhà trước thì mới biết xem phòng của tòa nào *@
+                    <a asp-controller="Apartments" asp-action="Index"
+                       class="btn-access bg-[#0d9488] hover:bg-[#0a6b62] no-underline relative z-10">
                         ➜ Truy cập
                     </a>
                 </div>
 
-                <div class="feature-box shadow-xl flex flex-col justify-between h-full hover:border-[#5D4037] transition-all">
-                    <div class="feature-icon pt-4">
-                        <i class="fa-solid fa-users-gear text-[#5D4037]" style="font-size: 4rem;"></i>
+                <div class="feature-box shadow-xl flex flex-col justify-between hover:border-[#5D4037] transition-all group relative">
+                    <div class="mb-4">
+                        <div class="feature-icon text-[#5D4037]"><i class="fa-solid fa-users-gear"></i></div>
+                        <h5 class="text-[#4a3728] font-bold text-xl mb-4 uppercase">Quản Lý Nhân Sự</h5>
+                        <p class="text-sm text-gray-500 mb-6">Quản lý danh sách Manager và phân quyền hệ thống.</p>
                     </div>
-                    <h5 class="fw-bold text-[#4a3728] text-xl my-4">Quản Lý Nhân Sự</h5>
-                    <p class="text-sm text-gray-500 mb-6">Quản lý danh sách nhân viên, phân quyền truy cập và thông tin liên hệ.</p>
-
-                    <a asp-controller="Admin" asp-action="manager" class="btn-access no-underline" style="background-color: #5D4037;">
+                    <a asp-controller="Dashboard" asp-action="ManagerList"
+                       class="btn-access no-underline relative z-10" style="background-color: #5D4037;">
                         ➜ Truy cập
                     </a>
-
+                </div>
             </div>
         </div>
     </div>
@@ -138,18 +156,30 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const chartRawData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(data.chartData));
+            // Sửa lỗi JS khi data.chartData bị null hoặc sai định dạng
+            const rawData = @Html.Raw(JsonSerializer.Serialize(data.chartData));
 
             const ctx = document.getElementById('apartmentChart').getContext('2d');
+
+            // Xử lý dữ liệu hiển thị
+            const labels = rawData && rawData.length > 0
+                ? rawData.map(d => 'Tòa ' + (d.name || d.buildingId || 'ID'))
+                : ['Chưa có dữ liệu'];
+
+            const counts = rawData && rawData.length > 0
+                ? rawData.map(d => d.total)
+                : [1];
+
             new Chart(ctx, {
-                type: 'pie',
+                type: 'doughnut', // Chuyển sang Doughnut nhìn cho sang
                 data: {
-                    labels: chartRawData.length > 0 ? chartRawData.map(d => 'Tòa ' + (d.name || d.buildingId)) : ['Chưa có dữ liệu'],
+                    labels: labels,
                     datasets: [{
-                        data: chartRawData.length > 0 ? chartRawData.map(d => d.total) : [1],
+                        data: counts,
                         backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'],
-                        borderWidth: 0,
-                        hoverOffset: 15
+                        borderWidth: 5,
+                        borderColor: '#ffffff',
+                        hoverOffset: 20
                     }]
                 },
                 options: {
@@ -160,10 +190,12 @@
                             position: 'bottom',
                             labels: {
                                 padding: 20,
-                                usePointStyle: true
+                                usePointStyle: true,
+                                font: { weight: 'bold' }
                             }
                         }
-                    }
+                    },
+                    cutout: '60%' // Làm rỗng ruột biểu đồ
                 }
             });
         });

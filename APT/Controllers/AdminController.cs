@@ -22,19 +22,18 @@ namespace APT.Controllers
 
             var chartData = _context.Buildings.Select(b => new {
                 name = b.Name,
-                total = _context.Apartments.Count(a => a.BuildingId == b.Id)
+                total = _context.Apartments.Count(a => a.building_id == b.Id) 
             }).ToList();
 
-            // Cập nhật ViewBag.Data với đầy đủ các thuộc tính
             ViewBag.Data = new
             {
                 total_buildings = totalBuildings,
                 total_rooms = totalRooms,
-                total_users = totalUsers, // 🔥 Phải có dòng này thì View mới gọi được
+                total_users = totalUsers,
                 chartData = chartData
             };
 
-            return View();
+            return View("~/Views/Dashboard/Admin.cshtml");
         }
     }
 }

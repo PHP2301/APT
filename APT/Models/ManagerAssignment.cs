@@ -7,7 +7,7 @@ namespace APT.Models
         public int Id { get; set; }
 
         [Column("user_id")]
-        public int UserId { get; set; }
+        public int user_id { get; set; }
 
         [Column("building_id")]
         public int BuildingId { get; set; }
@@ -16,7 +16,7 @@ namespace APT.Models
         public DateTime AssignedAt { get; set; }
 
         // Navigation
-        [ForeignKey("UserId")]
+        [ForeignKey("user_id")]
         public User User { get; set; }
 
         [ForeignKey("BuildingId")]

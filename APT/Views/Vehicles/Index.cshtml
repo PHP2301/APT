@@ -1,0 +1,187 @@
+﻿@model IEnumerable<APT.Models.Basement>
+@{
+    Layout = null;
+    int buildingId = ViewBag.BuildingId;
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <title>Quản lý Hầm xe</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        .sidebar-bg {
+            background-color: #7d939e;
+        }
+
+        .btn-active {
+            background-color: #d35400 !important;
+            color: white !important;
+        }
+
+        .progress-motorbike {
+            background-color: #9b59b6;
+        }
+
+        .progress-car {
+            background-color: #3498db;
+        }
+
+        .backdrop-blur {
+            backdrop-filter: blur(4px);
+        }
+    </style>
+</head>
+<body class="flex h-screen bg-[#f8f9fa]">
+
+    <aside class="w-64 sidebar-bg flex flex-col items-center py-8 px-4 text-white shrink-0 shadow-2xl">
+        <div class="w-20 h-20 rounded-full border-4 border-white overflow-hidden mb-4 bg-white">
+            <img src="https://api.dicebear.com/7.x/adventurer/svg?seed=Lucky" alt="Avatar">
+        </div>
+        <p class="font-bold text-sm mb-8 uppercase tracking-widest">Manager</p>
+        <div class="w-full space-y-2">
+            <a asp-controller="Dashboard" asp-action="Index" class="flex items-center gap-3 w-full py-2.5 px-6 bg-white text-gray-500 rounded-full font-bold no-underline text-sm shadow-sm">
+                <i class="fa-solid fa-house"></i> Trang chủ
+            </a>
+            <p class="text-[10px] uppercase font-black tracking-widest mt-6 mb-2 opacity-60 px-4">Quản lý tòa nhà</p>
+            <a asp-controller="Apartments" asp-action="Index" asp-route-buildingId="@buildingId" class="flex items-center gap-3 w-full py-2.5 px-6 bg-white text-gray-500 rounded-full font-bold no-underline text-sm">
+                <i class="fa-solid fa-door-open"></i> Danh sách Phòng
+            </a>
+            <a asp-controller="Residents" asp-action="Index" asp-route-buildingId="@buildingId" class="flex items-center gap-3 w-full py-2.5 px-6 bg-white text-gray-500 rounded-full font-bold no-underline text-sm">
+                <i class="fa-solid fa-users"></i> Cư dân
+            </a>
+            <a asp-controller="Services" asp-action="Index" asp-route-building_id="@buildingId" class="flex items-center gap-3 w-full py-2.5 px-6 bg-white text-gray-500 rounded-full font-bold no-underline text-sm">
+                <i class="fa-solid fa-bell-concierge"></i> Dịch vụ
+            </a>
+            <a href="#" class="flex items-center gap-3 w-full py-2.5 px-6 btn-active rounded-full font-bold no-underline text-sm shadow-lg">
+                <i class="fa-solid fa-car"></i> Hầm xe
+            </a>
+        </div>
+        <div class="mt-auto w-full">
+            <a asp-controller="Users" asp-action="Logout" class="flex items-center justify-center gap-2 w-full py-2 bg-white/20 rounded-xl text-white font-bold text-xs no-underline hover:bg-red-500">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i> Đăng xuất
+            </a>
+        </div>
+    </aside>
+
+    <main class="flex-1 p-10 overflow-y-auto">
+        <div class="flex justify-between items-start mb-8">
+            <div>
+                <h2 class="text-2xl font-black text-[#6c5ce7] flex items-center gap-2 uppercase">
+                    <i class="fa-solid fa-square-p"></i> Quản lý Hầm xe
+                </h2>
+                <p class="text-[10px] text-gray-400 font-bold tracking-wide">Tòa nhà: <span class="text-gray-600">@ViewBag.BuildingName</span> (Tổng: @Model.Count() hầm)</p>
+            </div>
+            <a asp-controller="Dashboard" asp-action="Index" class="text-xs text-gray-400 font-bold hover:underline no-underline italic">← Quay lại Tòa nhà</a>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            @foreach (var basement in Model)
+            {
+                var motorCount = basement.Vehicles?.Count(v => v.VehicleType == "motorbike") ?? 0;
+                var carCount = basement.Vehicles?.Count(v => v.VehicleType == "car") ?? 0;
+                var motorPercent = basement.MaxMotorbikes > 0 ? (motorCount * 100 / basement.MaxMotorbikes) : 0;
+                var carPercent = basement.MaxCars > 0 ? (carCount * 100 / basement.MaxCars) : 0;
+
+                <div class="bg-white rounded-[35px] shadow-xl p-8 border border-gray-100 hover:scale-[1.02] transition-all">
+                    <div class="flex justify-between items-center mb-10">
+                        <h3 class="font-black text-xl text-gray-700 uppercase">@basement.Name</h3>
+                        <button onclick="openConfigModal('@basement.Id', '@basement.Name', '@basement.MaxMotorbikes', '@basement.MaxCars')"
+                                class="bg-[#f3f0ff] text-[#6c5ce7] px-4 py-1.5 rounded-lg text-[10px] font-black hover:bg-[#6c5ce7] hover:text-white transition-all">
+                            <i class="fa-solid fa-gear mr-1"></i> Cấu hình
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-6">
+                        <div class="bg-gray-50 rounded-[25px] p-6 flex flex-col items-center shadow-inner relative">
+                            <i class="fa-solid fa-motorcycle text-2xl text-gray-300 mb-2"></i>
+                            <div class="text-xl font-black text-gray-700">@motorCount <span class="text-[10px] text-gray-300">/@basement.MaxMotorbikes</span></div>
+                            <div class="w-full h-1.5 bg-gray-200 rounded-full mt-4">
+                                <div class="h-full progress-motorbike rounded-full" style="width: @motorPercent%"></div>
+                            </div>
+                            <div class="mt-4 bg-[#e8f5e9] text-[#2e7d32] px-3 py-1 rounded-lg text-[10px] font-bold">100,000 đ</div>
+                        </div>
+
+                        <div class="bg-gray-50 rounded-[25px] p-6 flex flex-col items-center shadow-inner relative">
+                            <i class="fa-solid fa-car text-2xl text-gray-300 mb-2"></i>
+                            <div class="text-xl font-black text-gray-700">@carCount <span class="text-[10px] text-gray-300">/@basement.MaxCars</span></div>
+                            <div class="w-full h-1.5 bg-gray-200 rounded-full mt-4">
+                                <div class="h-full progress-car rounded-full" style="width: @carPercent%"></div>
+                            </div>
+                            <div class="mt-4 bg-[#e8f5e9] text-[#2e7d32] px-3 py-1 rounded-lg text-[10px] font-bold">0 đ</div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </main>
+
+    <div id="configModal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur">
+        <div class="bg-white rounded-[30px] w-full max-w-2xl p-10 shadow-2xl relative animate-fade-in">
+            <button onclick="closeConfigModal()" class="absolute right-8 top-8 text-gray-400 hover:text-gray-600">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+
+            <h3 class="text-xl font-bold text-[#6c5ce7] mb-8 uppercase tracking-tight">Cấu hình Hầm: <span id="modalBasementName" class="text-gray-700"></span></h3>
+
+            <form asp-action="UpdateBasement" method="post" class="space-y-8">
+                <input type="hidden" name="Id" id="config_id" />
+
+                <div class="grid grid-cols-2 gap-8">
+                    <div class="bg-gray-50 p-6 rounded-[25px] border border-gray-100">
+                        <h4 class="flex items-center gap-2 font-bold text-gray-700 mb-6 text-sm">
+                            <i class="fa-solid fa-motorcycle text-[#6c5ce7]"></i> Xe Máy
+                        </h4>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Sức chứa (chiếc)</label>
+                                <input type="number" name="MaxMotorbikes" id="config_max_motor" class="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-[#6c5ce7]/20 text-sm font-bold" />
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Giá vé tháng (VNĐ)</label>
+                                <input type="number" name="MotorPrice" value="100000" class="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-[#6c5ce7]/20 text-sm" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-50 p-6 rounded-[25px] border border-gray-100">
+                        <h4 class="flex items-center gap-2 font-bold text-gray-700 mb-6 text-sm">
+                            <i class="fa-solid fa-car text-[#6c5ce7]"></i> Ô tô
+                        </h4>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Sức chứa (chiếc)</label>
+                                <input type="number" name="MaxCars" id="config_max_car" class="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-[#6c5ce7]/20 text-sm font-bold" />
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Giá vé tháng (VNĐ)</label>
+                                <input type="number" name="CarPrice" value="0" class="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-[#6c5ce7]/20 text-sm" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full bg-[#6c5ce7] text-white py-4 rounded-2xl font-bold shadow-lg hover:bg-[#5849c4] transition-all active:scale-[0.98] uppercase text-sm tracking-widest">
+                    Lưu Cấu Hình
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openConfigModal(id, name, maxMotor, maxCar) {
+            document.getElementById('config_id').value = id;
+            document.getElementById('modalBasementName').innerText = name;
+            document.getElementById('config_max_motor').value = maxMotor;
+            document.getElementById('config_max_car').value = maxCar;
+            document.getElementById('configModal').classList.remove('hidden');
+        }
+
+        function closeConfigModal() {
+            document.getElementById('configModal').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>

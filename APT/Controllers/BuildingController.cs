@@ -2,6 +2,8 @@
 using APT.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Linq;
 
 namespace APT.Controllers
 {
@@ -14,39 +16,34 @@ namespace APT.Controllers
             _context = context;
         }
 
-
+        // 1. Trang danh sách tòa nhà (Cho nút "Quản lý tòa nhà" ngoài Dashboard)
         public IActionResult Index()
         {
-            return View(_context.Buildings.ToList());
+            // Include Basements nếu Đại Ca muốn đếm số hầm ở View Index
+            var list = _context.Buildings.Include(b => b.Basements).ToList();
+            return View(list);
         }
 
-       
-
-
-        [HttpPost]
-        public IActionResult Create(Building model)
+        // 2. Action quan trọng nhất: Cho Admin chọn tòa nhà trước khi xem Căn hộ
+        // Fix lỗi "Truy cập" từ Admin Dashboard
+        public IActionResult ChooseBuilding()
         {
-            if (!ModelState.IsValid)
-                return View(model);
+            // Lấy danh sách tòa nhà kèm theo số hầm để hiển thị Card xịn xò
+            var buildings = _context.Buildings.Include(b => b.Basements).ToList();
 
-            _context.Buildings.Add(model);
-            _context.SaveChanges();
-
-            return RedirectToAction("Index");
+            // Trỏ đúng về file Views/Buildings/ChooseBuilding.cshtml
+            return View(buildings);
         }
+
+        // 3. Chỉnh sửa tòa nhà
         public IActionResult Edit(int id)
         {
-            // Tìm tòa nhà theo ID
             var building = _context.Buildings.Find(id);
+            if (building == null) return NotFound();
 
-            if (building == null)
-            {
-                return NotFound();
-            }
-
-            // Trả về View Edit cùng dữ liệu của tòa nhà đó
             return View(building);
         }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Edit(Building model)
@@ -57,27 +54,37 @@ namespace APT.Controllers
                 {
                     _context.Buildings.Update(model);
                     _context.SaveChanges();
-                    return RedirectToAction("Index"); // Lưu xong bay về trang danh sách
+                    return RedirectToAction("Index");
                 }
                 catch (Exception ex)
                 {
                     ModelState.AddModelError("", "Lỗi lưu dữ liệu: " + ex.Message);
                 }
             }
-            // Nếu có lỗi (dữ liệu không hợp lệ), trả về View cùng dữ liệu đã nhập để sửa lại
             return View(model);
         }
 
+        // 4. Tạo mới tòa nhà
+        [HttpPost]
+        public IActionResult Create(Building model)
+        {
+            if (!ModelState.IsValid) return View("Index", _context.Buildings.ToList());
+
+            _context.Buildings.Add(model);
+            _context.SaveChanges();
+
+            return RedirectToAction("Index");
+        }
+
+        // 5. Xóa tòa nhà
         public IActionResult Delete(int id)
         {
             var building = _context.Buildings.Find(id);
-
             if (building != null)
             {
                 _context.Buildings.Remove(building);
                 _context.SaveChanges();
             }
-
             return RedirectToAction("Index");
         }
     }

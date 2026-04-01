@@ -2,6 +2,7 @@
 
 namespace APT.Models
 {
+    [Table("building_managers")]
     public class BuildingManager
     {
         public int Id { get; set; }

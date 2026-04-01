@@ -1,0 +1,152 @@
+﻿@model IEnumerable<APT.Models.Apartment>
+@{
+    Layout = null;
+    var building = ViewBag.Building as APT.Models.Building;
+    // FIX: Lấy building_id từ ViewBag để các nút chức năng hoạt động
+    int bId = ViewBag.building_id ?? 0;
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <title>Quản lý Phòng - @(building?.Name ?? "Dự án")</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        .sidebar-bg {
+            background-color: #7d939e;
+        }
+
+        .btn-active {
+            background-color: #d35400 !important;
+            color: white !important;
+        }
+
+        canvas {
+            max-width: 100% !important;
+            height: auto !important;
+        }
+    </style>
+</head>
+<body class="flex h-screen bg-[#f1f3f5] font-sans">
+
+    <aside class="w-64 sidebar-bg flex flex-col items-center py-8 px-4 text-white shrink-0 shadow-2xl">
+        <div class="w-20 h-20 rounded-full border-4 border-white overflow-hidden mb-4 bg-white">
+            <img src="https://api.dicebear.com/7.x/adventurer/svg?seed=Lucky" alt="Avatar">
+        </div>
+        <div class="w-full space-y-2 mt-4">
+            <a asp-controller="Dashboard" asp-action="Index" class="flex items-center gap-3 w-full py-2.5 px-6 bg-white text-gray-500 rounded-full font-bold no-underline text-sm shadow-sm hover:bg-gray-100 transition-all">
+                <i class="fa-solid fa-house"></i> Trang chủ
+            </a>
+            <p class="text-[10px] uppercase font-black tracking-widest mt-6 mb-2 opacity-60 px-4">Quản lý tòa nhà</p>
+
+            <a href="#" class="flex items-center gap-3 w-full py-2.5 px-6 btn-active rounded-full font-bold no-underline text-sm shadow-lg">
+                <i class="fa-solid fa-door-open"></i> Danh sách Phòng
+            </a>
+
+            <a asp-controller="Residents" asp-action="ListByBuilding" asp-route-building_id="@bId" class="flex items-center gap-3 w-full py-2.5 px-6 bg-white text-gray-500 rounded-full font-bold no-underline text-sm hover:bg-gray-100 transition-all">
+                <i class="fa-solid fa-users"></i> Cư dân
+            </a>
+            <a asp-controller="Services" asp-action="Index" asp-route-building_id="@bId" class="flex items-center gap-3 w-full py-2.5 px-6 bg-white text-gray-500 rounded-full font-bold no-underline text-sm hover:bg-gray-100 transition-all">
+                <i class="fa-solid fa-bell-concierge"></i> Dịch vụ
+            </a>
+        </div>
+    </aside>
+
+    <main class="flex-1 p-8 overflow-y-auto">
+        <h2 class="text-2xl font-black text-gray-700 mb-8 uppercase tracking-tighter">
+            Danh sách Phòng - <span class="text-blue-600">@(building?.Name ?? "...")</span>
+        </h2>
+
+        <div class="flex flex-col lg:flex-row gap-8">
+            @* Widget Biểu đồ trạng thái *@
+            <div class="w-full lg:w-72 bg-white rounded-[40px] p-8 shadow-xl flex flex-col items-center h-fit border border-gray-50">
+                <div class="bg-red-50 text-red-500 px-4 py-1 rounded-full text-[10px] font-black mb-6 uppercase tracking-widest">
+                    Tổng số: @(ViewBag.TotalRooms ?? 0)
+                </div>
+                <div class="w-48 h-48 mb-8 relative">
+                    <canvas id="roomChart"></canvas>
+                </div>
+                <div class="w-full space-y-3 text-[11px] font-black uppercase tracking-wide">
+                    <div class="flex justify-between items-center text-green-500 bg-green-50 px-4 py-2 rounded-xl">
+                        <span>Trống</span> <span>@(ViewBag.CountAvailable ?? 0)</span>
+                    </div>
+                    <div class="flex justify-between items-center text-blue-500 bg-blue-50 px-4 py-2 rounded-xl">
+                        <span>Đã thuê</span> <span>@(ViewBag.CountOccupied ?? 0)</span>
+                    </div>
+                    <div class="flex justify-between items-center text-yellow-500 bg-yellow-50 px-4 py-2 rounded-xl">
+                        <span>Bảo trì</span> <span>@(ViewBag.CountMaintenance ?? 0)</span>
+                    </div>
+                </div>
+            </div>
+
+            @* Lưới danh sách phòng *@
+            <div class="flex-1 grid grid-cols-1 xl:grid-cols-2 gap-6">
+                @foreach (var room in Model)
+                {
+                    <div class="bg-white rounded-[35px] border-l-[10px] @(room.Status == "Available" ? "border-green-400" : (room.Status == "Occupied" ? "border-blue-400" : "border-yellow-400")) p-6 shadow-sm hover:shadow-xl transition-all">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h4 class="font-black text-xl text-gray-800 tracking-tighter">@room.FullRoomName</h4>
+                                <span class="text-[10px] font-black text-gray-300 uppercase tracking-widest">@room.RoomType</span>
+                            </div>
+                            <span class="px-3 py-1 rounded-lg text-[9px] font-black uppercase @(room.Status == "Available" ? "bg-green-50 text-green-500" : (room.Status == "Occupied" ? "bg-blue-50 text-blue-500" : "bg-yellow-50 text-yellow-500"))">
+                                @room.Status
+                            </span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 text-[11px] mb-6 font-bold text-gray-400 uppercase">
+                            <span class="flex items-center gap-2"><i class="fa-solid fa-layer-group text-gray-200"></i> Tầng @room.FloorNumber</span>
+                            <span class="flex items-center gap-2"><i class="fa-solid fa-expand text-gray-200"></i> @(room.Area ?? 0) m²</span>
+                        </div>
+                        <div class="flex justify-between items-center border-t border-dashed pt-5">
+                            <span class="text-xl font-black text-gray-800 tracking-tighter">
+                                @((room.RentPrice ?? 0).ToString("N0")) <span class="text-xs text-gray-300 uppercase">đ</span>
+                            </span>
+                            <div class="flex gap-2">
+                                <a asp-action="Edit" asp-route-id="@room.Id" class="px-4 py-2 bg-gray-100 text-gray-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-200 no-underline transition-all">Sửa</a>
+
+                                @if (room.Status == "Available")
+                                {
+                                    <a asp-controller="Residents" asp-action="AddToApartment" asp-route-apartmentId="@room.Id" class="px-4 py-2 bg-green-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-black no-underline transition-all">Thuê</a>
+                                }
+                                else
+                                {
+                                    <a asp-controller="Billing" asp-action="RoomDetails" asp-route-roomId="@room.Id" class="px-4 py-2 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-black no-underline transition-all">Thu tiền</a>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // FIX: Bọc giá trị ViewBag vào dấu nháy để tránh lỗi (JS) Expression Expected
+        const countAvail = Number('@(ViewBag.CountAvailable ?? 0)');
+        const countOccu = Number('@(ViewBag.CountOccupied ?? 0)');
+        const countMain = Number('@(ViewBag.CountMaintenance ?? 0)');
+
+        new Chart(document.getElementById('roomChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Trống', 'Đã thuê', 'Bảo trì'],
+                datasets: [{
+                    data: [countAvail, countOccu, countMain],
+                    backgroundColor: ['#4ade80', '#60a5fa', '#facc15'],
+                    hoverOffset: 10,
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                cutout: '80%',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } }
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,121 @@
+﻿@model APT.Models.User
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <title>Thông tin cá nhân - Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        .sidebar-bg {
+            background-color: #7d939e;
+        }
+
+        .btn-update {
+            background-color: #7d939e;
+        }
+
+        .btn-orange {
+            background-color: #d35400;
+        }
+    </style>
+</head>
+<body class="flex h-screen bg-[#f8f9fa]">
+
+    <aside class="w-64 sidebar-bg flex flex-col items-center py-8 px-4 text-white shadow-2xl shrink-0">
+        <div class="w-20 h-20 rounded-full border-4 border-white overflow-hidden mb-4 bg-white">
+            <img src="https://api.dicebear.com/7.x/adventurer/svg?seed=Lucky" alt="Avatar">
+        </div>
+        <p class="font-bold text-sm mb-8 uppercase">@Model.FullName</p>
+
+        <div class="w-full space-y-4">
+            <a asp-controller="Dashboard" asp-action="Index" class="flex items-center gap-3 w-full py-3 px-6 bg-white text-[#7d939e] rounded-full font-bold no-underline transition-all">
+                <i class="fa-solid fa-house"></i> Trang chủ
+            </a>
+            <a href="#" class="flex items-center gap-3 w-full py-3 px-6 btn-orange text-white rounded-full font-bold shadow-lg no-underline transition-all">
+                <i class="fa-solid fa-user-gear"></i> Tài khoản
+            </a>
+        </div>
+
+        <div class="mt-auto w-full">
+            <a asp-controller="Users" asp-action="Logout" class="flex items-center justify-center gap-2 w-full py-2 bg-white/20 rounded-xl hover:bg-red-500 transition-all no-underline text-white font-bold text-xs">
+                <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
+            </a>
+        </div>
+    </aside>
+
+    <main class="flex-1 p-12 overflow-y-auto flex justify-center items-start gap-8">
+
+        <div class="w-[450px] bg-white rounded-[30px] p-10 shadow-xl border border-gray-100">
+            <h3 class="text-center text-gray-700 font-bold text-xl mb-6">Thông tin cá nhân</h3>
+
+            <div class="flex flex-col items-center mb-8">
+                <div class="w-24 h-24 rounded-full border-2 border-orange-400 p-1 mb-2">
+                    <img src="https://api.dicebear.com/7.x/adventurer/svg?seed=Lucky" class="w-full h-full rounded-full object-cover">
+                </div>
+                <button class="text-xs text-gray-500 hover:text-orange-600 transition-colors">
+                    <i class="fa-solid fa-camera"></i> Đổi ảnh đại diện
+                </button>
+            </div>
+
+            <form asp-action="Profile" method="post" class="space-y-5">
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 mb-1">Email</label>
+                    <input type="email" value="@Model.Email" class="w-full px-4 py-3 bg-gray-50 rounded-xl border-none text-gray-400 text-sm outline-none cursor-not-allowed" readonly />
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">Họ và tên</label>
+                    <input type="text" name="fullname" value="@Model.FullName" class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-orange-400 outline-none" />
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">Số điện thoại</label>
+                    <input type="text" name="phone" value="@Model.Phone" class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-orange-400 outline-none" />
+                </div>
+
+                <button type="submit" class="w-full py-4 btn-update text-white rounded-2xl font-bold mt-4 shadow-lg hover:opacity-90 transition-all text-sm uppercase tracking-wider">
+                    Lưu thông tin
+                </button>
+            </form>
+        </div>
+
+        <div class="w-[450px] bg-white rounded-[30px] p-10 shadow-xl border border-gray-100">
+            <h3 class="text-center text-gray-700 font-bold text-xl mb-10">Đổi mật khẩu</h3>
+
+            @if (TempData["msg_flash"] != null)
+            {
+                <div class="mb-4 p-3 bg-blue-50 text-blue-600 text-xs rounded-lg text-center font-bold">
+                    @TempData["msg_flash"]
+                </div>
+            }
+
+            <form asp-action="ChangePassword" method="post" class="space-y-6">
+                <div class="relative">
+                    <label class="block text-xs font-bold text-gray-500 mb-1">Mật khẩu hiện tại</label>
+                    <input type="password" name="current_password" placeholder="Nhập mật khẩu hiện tại" class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-orange-400 outline-none" />
+                    <i class="fa-solid fa-eye-slash absolute right-4 bottom-4 text-gray-400 text-xs"></i>
+                </div>
+                <div class="relative">
+                    <label class="block text-xs font-bold text-gray-500 mb-1">Mật khẩu mới</label>
+                    <input type="password" name="new_password" class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-orange-400 outline-none" />
+                    <i class="fa-solid fa-eye-slash absolute right-4 bottom-4 text-gray-400 text-xs"></i>
+                </div>
+                <div class="relative">
+                    <label class="block text-xs font-bold text-gray-500 mb-1">Xác nhận mật khẩu</label>
+                    <input type="password" name="confirm_password" class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-orange-400 outline-none" />
+                    <i class="fa-solid fa-eye-slash absolute right-4 bottom-4 text-gray-400 text-xs"></i>
+                </div>
+
+                <button type="submit" class="w-full py-4 bg-[#7d939e] text-white rounded-2xl font-bold mt-4 shadow-lg flex items-center justify-center gap-2 text-sm uppercase tracking-wider">
+                    <i class="fa-solid fa-key"></i> Cập nhật mật khẩu
+                </button>
+            </form>
+        </div>
+
+    </main>
+
+</body>
+</html>

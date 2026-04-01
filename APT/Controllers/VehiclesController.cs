@@ -16,15 +16,18 @@ namespace APT.Controllers
 
         public IActionResult Index(int buildingId)
         {
-            var vehicles = _context.Vehicles
-                .Include(v => v.Resident)
-                .Include(v => v.Basement)
-                .Where(v => v.BuildingId == buildingId)
+            // 1. Lấy thông tin tòa nhà
+            var building = _context.Buildings.Find(buildingId);
+            ViewBag.BuildingName = building?.Name ?? "IDICO";
+
+            // 2. Lấy danh sách hầm kèm theo danh sách xe trong mỗi hầm để đếm
+            var basements = _context.Basements
+                .Where(b => b.BuildingId == buildingId)
+                .Include(b => b.Vehicles) // Cần nạp danh sách xe để đếm ở View
                 .ToList();
 
             ViewBag.BuildingId = buildingId;
-
-            return View(vehicles);
+            return View(basements); // Trả về danh sách Basements
         }
 
         public IActionResult Register(int buildingId)
@@ -98,6 +101,23 @@ namespace APT.Controllers
             }
 
             return RedirectToAction("Index");
+        }
+        [HttpPost]
+        public IActionResult UpdateBasement(Basement model)
+        {
+            var basement = _context.Basements.Find(model.Id);
+            if (basement != null)
+            {
+                basement.MaxMotorbikes = model.MaxMotorbikes;
+                basement.MaxCars = model.MaxCars;
+                // Nếu DB có cột giá vé thì Đại Ca gán thêm ở đây
+                // basement.MotorbikePrice = model.MotorbikePrice;
+                // basement.CarPrice = model.CarPrice;
+
+                _context.SaveChanges();
+                TempData["msg_flash"] = "Cập nhật cấu hình hầm thành công!";
+            }
+            return RedirectToAction("Index", new { buildingId = basement?.BuildingId });
         }
     }
 }

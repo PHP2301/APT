@@ -1,49 +1,108 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - APT</title>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/APT.styles.css" asp-append-version="true" />
+    <title>@ViewData["Title"] - APT Apartment</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <style>
+        /* Màu cam chủ đạo giống hình Đại Ca gửi */
+        .navbar-custom {
+            background-color: #d35400 !important;
+        }
+
+        .nav-link-custom {
+            color: white !important;
+            font-weight: bold;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 0.5rem 1rem !important;
+            transition: all 0.3s;
+        }
+
+            .nav-link-custom:hover {
+                background-color: rgba(255,255,255,0.1);
+                border-radius: 8px;
+            }
+
+        .navbar-brand-custom {
+            color: white !important;
+            font-weight: 900;
+            letter-spacing: -1px;
+        }
+    </style>
 </head>
-<body>
+<body class="bg-[#f5ebe0]">
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">APT</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark navbar-custom border-bottom box-shadow mb-3 py-3">
+            <div class="container-fluid px-4">
+                <a class="navbar-brand navbar-brand-custom flex items-center gap-2" asp-controller="Admin" asp-action="Dashboard">
+                    <i class="fa-solid fa-building-user"></i> APARTMENT
+                </a>
+
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
+
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-end">
+                    <ul class="navbar-nav gap-2 items-center">
+                        @* 1. DASHBOARD *@
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                            <a class="nav-link nav-link-custom" asp-controller="Admin" asp-action="Dashboard">
+                                <i class="fa-solid fa-gauge-high mr-1"></i> Dashboard
+                            </a>
                         </li>
+
+                        @* 2. TÒA NHÀ (Trỏ về ChooseBuilding để hiện Card ảnh) *@
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+                            <a class="nav-link nav-link-custom" asp-controller="Buildings" asp-action="ChooseBuilding">
+                                <i class="fa-solid fa-city mr-1"></i> Tòa nhà
+                            </a>
+                        </li>
+
+                        @* 3. NHÂN SỰ *@
+                        <li class="nav-item">
+                            <a class="nav-link nav-link-custom" asp-controller="Dashboard" asp-action="ManagerList">
+                                <i class="fa-solid fa-user-tie mr-1"></i> Nhân sự
+                            </a>
+                        </li>
+
+                        @* 4. CĂN HỘ (Cũng trỏ về chọn tòa nhà trước) *@
+                        <li class="nav-item">
+                            <a class="nav-link nav-link-custom" asp-controller="Buildings" asp-action="ChooseBuilding">
+                                <i class="fa-solid fa-door-open mr-1"></i> Căn hộ
+                            </a>
+                        </li>
+
+                        @* THÔNG TIN ADMIN *@
+                        <li class="nav-item ml-4 flex items-center gap-3 border-l border-white/20 pl-4">
+                            <span class="text-white text-[11px] font-bold italic opacity-80">Xin chào, Super Admin</span>
+                            <a asp-controller="Users" asp-action="Logout" class="text-white hover:text-red-300 transition-colors">
+                                <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                            </a>
                         </li>
                     </ul>
                 </div>
             </div>
         </nav>
     </header>
-    <div class="container">
-        <main role="main" class="pb-3">
+
+    <div class="container-fluid px-0">
+        <main role="main">
             @RenderBody()
         </main>
     </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - APT - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+    <footer class="footer text-muted mt-10 pb-4">
+        <div class="container text-center text-[10px] font-bold uppercase tracking-widest">
+            &copy; 2026 - APT SYSTEM MANAGEMENT - <a asp-controller="Home" asp-action="Privacy" class="text-orange-600 no-underline">Privacy Policy</a>
         </div>
     </footer>
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>

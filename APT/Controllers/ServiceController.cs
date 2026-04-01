@@ -23,13 +23,13 @@ namespace APT.Controllers
         public IActionResult Index(int? building_id)
         {
             var role = HttpContext.Session.GetString("role");
-            var userId = HttpContext.Session.GetInt32("user_id");
+            var user_id = HttpContext.Session.GetInt32("user_id");
 
             // Manager chưa chọn building → auto lấy building đầu tiên được phân công
             if (!building_id.HasValue && role == "manager")
             {
-                var assigned = _context.BuildingManagers
-                    .Where(bm => bm.ManagerId == userId)
+                var assigned = _context.Building_Managers
+                    .Where(bm => bm.ManagerId == user_id)
                     .Include(bm => bm.Building)
                     .Select(bm => bm.Building)
                     .ToList();
@@ -50,7 +50,7 @@ namespace APT.Controllers
             }
 
             var services = _context.Services
-                .Where(s => s.BuildingId == building_id)
+                .Where(s => s.building_id == building_id)
                 .OrderByDescending(s => s.Id)
                 .ToList();
 
@@ -75,14 +75,14 @@ namespace APT.Controllers
         {
             if (!ModelState.IsValid)
                 return RedirectToAction("Index",
-                    new { building_id = model.BuildingId });
+                    new { building_id = model.building_id });
 
             _context.Services.Add(model);
             _context.SaveChanges();
 
             TempData["msg_flash"] = "Thêm dịch vụ thành công!";
             return RedirectToAction("Index",
-                new { building_id = model.BuildingId });
+                new { building_id = model.building_id });
         }
 
         // ==========================
@@ -108,7 +108,7 @@ namespace APT.Controllers
 
             TempData["msg_flash"] = "Cập nhật thành công!";
             return RedirectToAction("Index",
-                new { building_id = service.BuildingId });
+                new { building_id = service.building_id });
         }
 
         // ==========================

@@ -1,0 +1,119 @@
+﻿@model IEnumerable<APT.Models.Apartment>
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Danh sách Phòng";
+    var building = ViewBag.Building as APT.Models.Building;
+    // FIX: Lấy building_id từ ViewBag để các nút chức năng hoạt động
+    int bId = ViewBag.building_id ?? 0;
+}
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<div class="min-h-screen bg-[#f5ebe0] py-8 px-4 md:px-10">
+    <a asp-controller="Dashboard" asp-action="ChooseBuilding" class="text-[#7f5539] font-bold no-underline hover:underline mb-6 inline-block flex items-center gap-2">
+        <i class="fa-solid fa-arrow-left"></i> Quay lại danh sách Tòa nhà
+    </a>
+
+    <div class="max-w-7xl mx-auto bg-[#ddb892] rounded-[40px] p-6 md:p-10 shadow-2xl">
+
+        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-10 gap-6">
+            <div>
+                <h2 class="text-[#8b0000] text-3xl font-black flex items-center gap-3 uppercase">
+                    <i class="fa-solid fa-building-user"></i> Danh sách Phòng - @(building?.Name ?? "IDICO")
+                </h2>
+                <p class="text-[#4a3728] font-bold opacity-80 mt-1">Quản lý trạng thái, giá thuê và cư dân.</p>
+            </div>
+
+            <div class="flex flex-wrap gap-3">
+                <div class="relative">
+                    <input type="text" placeholder="Tìm phòng..." class="pl-10 pr-4 py-2 rounded-xl border-none outline-none shadow-md text-sm w-48 focus:ring-2 focus:ring-[#d35400]" />
+                    <i class="fa-solid fa-search absolute left-4 top-3 text-gray-400"></i>
+                </div>
+
+                @* FIX: Cập nhật asp-route-building_id cho các nút bấm *@
+                <a asp-controller="Residents" asp-action="ListByBuilding" asp-route-building_id="@bId" class="bg-[#219ebc] text-white px-4 py-2 rounded-xl font-bold text-sm shadow-md no-underline flex items-center gap-2 hover:bg-black transition-all">
+                    <i class="fa-solid fa-users"></i> Cư dân
+                </a>
+                <a asp-controller="Basements" asp-action="Index" asp-route-building_id="@bId" class="bg-[#665191] text-white px-4 py-2 rounded-xl font-bold text-sm shadow-md no-underline flex items-center gap-2 hover:bg-black transition-all">
+                    <i class="fa-solid fa-warehouse"></i> Quản lý Hầm
+                </a>
+                <a asp-controller="Services" asp-action="Index" asp-route-building_id="@bId" class="bg-[#00a896] text-white px-4 py-2 rounded-xl font-bold text-sm shadow-md no-underline flex items-center gap-2 hover:bg-black transition-all">
+                    <i class="fa-solid fa-bell-concierge"></i> Dịch vụ
+                </a>
+                <a asp-action="CreateBatch" asp-route-building_id="@bId" class="bg-[#2d6a4f] text-white px-4 py-2 rounded-xl font-bold text-sm shadow-md no-underline flex items-center gap-2 hover:bg-black transition-all">
+                    <i class="fa-solid fa-plus-circle"></i> Tạo phòng
+                </a>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            @foreach (var item in Model)
+            {
+                string borderColor = "border-green-500";
+                string textColor = "text-green-600";
+                string statusIcon = "fa-circle-dot";
+                string statusText = "Đang trống";
+
+                if (item.Status == "Occupied")
+                {
+                    borderColor = "border-blue-400";
+                    textColor = "text-blue-600";
+                    statusIcon = "fa-user-check";
+                    statusText = "Đang ở";
+
+                }
+                else if (item.Status == "Maintenance")
+                {
+                    borderColor = "border-yellow-500";
+                    textColor = "text-yellow-600";
+                    statusIcon = "fa-screwdriver-wrench";
+                    statusText = "Bảo trì";
+                }
+
+                <div class="bg-white rounded-3xl border-t-8 @borderColor p-5 shadow-xl hover:scale-105 transition-all flex flex-col h-full">
+                    <div class="flex justify-between items-start mb-4">
+                        <h4 class="text-xl font-black text-slate-700">@item.FullRoomName</h4>
+                        <span class="@textColor text-[10px] font-bold uppercase flex items-center gap-1">
+                            <i class="fa-solid @statusIcon"></i> @statusText
+                        </span>
+                    </div>
+
+                    <div class="space-y-2 text-sm text-gray-600 mb-6 font-medium">
+                        <div class="flex justify-between">
+                            <span class="flex items-center gap-2"><i class="fa-solid fa-layer-group w-4 text-gray-400"></i> Tầng:</span>
+                            <span class="font-bold">@item.FloorNumber</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="flex items-center gap-2"><i class="fa-solid fa-vector-square w-4 text-gray-400"></i> Loại:</span>
+                            <span class="font-bold">@item.RoomType</span>
+                        </div>
+                        <div class="flex justify-between pt-2 border-t border-dashed">
+                            <span class="text-xs">Giá thuê:</span>
+                            @* FIX: Ép kiểu decimal? sang decimal để ToString *@
+                            <span class="text-lg font-black text-slate-800">@((item.RentPrice ?? 0).ToString("N0")) đ</span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2 mt-auto">
+                        <a asp-action="Edit" asp-route-id="@item.Id" class="py-2 rounded-lg border border-gray-300 text-gray-600 text-center font-bold text-xs hover:bg-gray-50 no-underline transition-all">
+                            <i class="fa-solid fa-pen-to-square"></i> Sửa
+                        </a>
+
+                        @if (item.Status == "Available")
+                        {
+                            <a asp-controller="Residents" asp-action="AddToApartment" asp-route-apartmentId="@item.Id" class="bg-green-600 text-white py-2 rounded-lg font-bold text-xs text-center no-underline shadow-md hover:bg-black transition-all flex items-center justify-center gap-1">
+                                <i class="fa-solid fa-user-plus"></i> Thêm Cư Dân
+                            </a>
+                        }
+                        else
+                        {
+                            <a asp-controller="Billing" asp-action="RoomDetails" asp-route-roomId="@item.Id" class="bg-blue-600 text-white py-2 rounded-lg font-bold text-xs text-center no-underline shadow-md hover:bg-black transition-all flex items-center justify-center gap-1">
+                                <i class="fa-solid fa-file-invoice-dollar"></i> Quản lý & Thu
+                            </a>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>

@@ -1,0 +1,208 @@
+﻿@model IEnumerable<APT.Models.Resident>
+@{
+    Layout = null;
+    // FIX: Đồng bộ tên tham số building_id
+    int currentBuildingId = ViewBag.building_id ?? 0;
+    var emptyRooms = ViewBag.EmptyRooms as IEnumerable<APT.Models.Apartment>;
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <title>Quản lý Cư dân - APT</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        .sidebar-bg {
+            background-color: #7d939e;
+        }
+
+        .btn-active {
+            background-color: #d35400 !important;
+            color: white !important;
+        }
+
+        .table-header {
+            background-color: #d35400;
+            color: white;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="flex h-screen bg-[#f1f3f5] font-sans">
+
+    <aside class="w-64 sidebar-bg flex flex-col items-center py-8 px-4 text-white shrink-0 shadow-2xl">
+        <div class="w-20 h-20 rounded-full border-4 border-white overflow-hidden mb-4 bg-white">
+            <img src="https://api.dicebear.com/7.x/adventurer/svg?seed=Lucky" alt="Avatar">
+        </div>
+        <p class="font-bold text-sm mb-8 uppercase tracking-widest">Quản lý</p>
+        <div class="w-full space-y-2">
+            <a asp-controller="Dashboard" asp-action="Index" class="flex items-center gap-3 w-full py-2.5 px-6 bg-white text-gray-500 rounded-full font-bold no-underline text-sm shadow-sm hover:bg-gray-100 transition-all">
+                <i class="fa-solid fa-house"></i> Trang chủ
+            </a>
+            <p class="text-[10px] uppercase font-black tracking-widest mt-6 mb-2 opacity-60 px-4 italic">Quản lý tòa nhà</p>
+            <a asp-controller="Apartments" asp-action="Index" asp-route-building_id="@currentBuildingId" class="flex items-center gap-3 w-full py-2.5 px-6 bg-white text-gray-500 rounded-full font-bold no-underline text-sm hover:bg-gray-100 transition-all">
+                <i class="fa-solid fa-door-open"></i> Danh sách Phòng
+            </a>
+            <a href="#" class="flex items-center gap-3 w-full py-2.5 px-6 btn-active rounded-full font-bold no-underline text-sm shadow-lg">
+                <i class="fa-solid fa-users"></i> Cư dân
+            </a>
+        </div>
+        <div class="mt-auto w-full">
+            <a asp-controller="Users" asp-action="Logout" class="flex items-center justify-center gap-2 w-full py-2 bg-white/20 rounded-xl text-white font-bold text-xs no-underline hover:bg-red-500 transition-all">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i> Đăng xuất
+            </a>
+        </div>
+    </aside>
+
+    <main class="flex-1 p-8 overflow-y-auto">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-black text-[#d35400] flex items-center gap-3 uppercase tracking-tighter">
+                <i class="fa-solid fa-users"></i> Quản lý Cư dân
+            </h2>
+            <a asp-controller="Apartments" asp-action="Index" asp-route-building_id="@currentBuildingId" class="text-xs text-gray-400 font-bold hover:underline no-underline uppercase italic">← Quay lại Sơ đồ phòng</a>
+        </div>
+
+        <div class="bg-white p-4 rounded-2xl shadow-sm mb-6 flex justify-between items-center border border-gray-100">
+            <div class="relative">
+                <input type="text" id="resSearch" placeholder="Tìm tên, SĐT..." class="pl-10 pr-4 py-2 rounded-xl bg-gray-50 border-none text-xs w-64 focus:ring-2 focus:ring-orange-200 font-bold" />
+                <i class="fa-solid fa-search absolute left-4 top-3 text-gray-300 text-xs"></i>
+            </div>
+            <button onclick="toggleAddModal()" class="bg-[#219ebc] text-white px-6 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2 shadow-lg hover:bg-black transition-all">
+                <i class="fa-solid fa-user-plus"></i> Thêm cư dân
+            </button>
+        </div>
+
+        <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="table-header text-[10px] uppercase font-black">
+                        <th class="px-6 py-5 tracking-widest">Họ và tên</th>
+                        <th class="px-6 py-5 text-center tracking-widest">Trạng thái/Phòng</th>
+                        <th class="px-6 py-5 text-center tracking-widest">Hành động</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100" id="residentTableBody">
+                    @foreach (var r in Model)
+                    {
+                        <tr class="hover:bg-gray-50 transition-all group">
+                            <td class="px-6 py-4 font-black text-gray-700 text-sm italic">@r.FullName</td>
+                            <td class="px-6 py-4 text-center">
+                                @if (r.Apartments != null && r.Apartments.Any())
+                                {
+                                    <span class="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-[10px] font-black border border-blue-100 uppercase">
+                                        <i class="fa-solid fa-house-user mr-1"></i> @r.Apartments.First().FullRoomName
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="bg-gray-100 text-gray-400 px-3 py-1 rounded-full text-[10px] font-black uppercase">Tự do</span>
+                                }
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex justify-center gap-2">
+                                    <button class="p-2 bg-yellow-50 text-yellow-600 rounded-lg hover:bg-yellow-500 hover:text-white transition-all"><i class="fa-solid fa-pen text-xs"></i></button>
+
+                                    @if (!(r.Apartments != null && r.Apartments.Any()))
+                                    {
+                                        <button onclick="openAssignModal('@r.Id', '@r.FullName')" class="flex items-center gap-1 px-3 py-1 bg-slate-700 text-white rounded-lg font-black text-[9px] uppercase tracking-widest hover:bg-black transition-all">
+                                            <i class="fa-solid fa-door-open"></i> Vào phòng
+                                        </button>
+                                    }
+
+                                    <form asp-action="Delete" asp-route-id="@r.Id" method="post" onsubmit="return confirm('Xóa cư dân này?')">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-500 hover:text-white transition-all"><i class="fa-solid fa-trash text-xs"></i></button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    @* MODAL THÊM CƯ DÂN *@
+    <div id="addModal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-[35px] w-full max-w-md p-10 shadow-2xl">
+            <h3 class="text-xl font-black text-[#d35400] mb-6 uppercase tracking-tighter">Thêm cư dân mới</h3>
+            <form asp-action="Add" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="building_id" value="@currentBuildingId" />
+                <label class="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1">Họ và tên *</label>
+                <input type="text" name="FullName" class="w-full px-5 py-3 bg-gray-50 border-2 border-transparent rounded-2xl outline-none focus:border-orange-400 focus:bg-white mb-8 text-sm font-bold transition-all" required />
+                <div class="flex gap-3">
+                    <button type="button" onclick="toggleAddModal()" class="flex-1 py-3 bg-gray-100 text-gray-500 rounded-2xl font-black text-[10px] uppercase tracking-widest">Hủy</button>
+                    <button type="submit" class="flex-1 py-3 bg-[#d35400] text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-orange-100 hover:bg-black transition-all">Lưu cư dân</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @* MODAL VÀO PHÒNG *@
+    <div id="assignRoomModal" class="hidden fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-[35px] w-full max-w-md p-10 shadow-2xl">
+            <h3 class="text-xl font-black text-orange-600 mb-6 uppercase tracking-tighter italic">Phòng cho: <span id="targetName" class="text-gray-800"></span></h3>
+            <form asp-action="AssignRoom" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="residentId" id="resIdField" />
+                <input type="hidden" name="building_id" value="@currentBuildingId" />
+                <div class="max-h-64 overflow-y-auto pr-2 custom-scrollbar space-y-2">
+                    @if (emptyRooms != null && emptyRooms.Any())
+                    {
+                        @foreach (var room in emptyRooms)
+                        {
+                            <label class="flex items-center justify-between p-4 rounded-2xl border border-gray-100 hover:bg-orange-50 cursor-pointer transition-all">
+                                <div class="flex items-center gap-3">
+                                    <input type="radio" name="apartmentId" value="@room.Id" required class="w-4 h-4 text-orange-600">
+                                    <span class="font-black text-gray-700 text-sm">@room.FullRoomName</span>
+                                </div>
+                                @* FIX: Ép kiểu decimal? để ToString("N0") *@
+                                <span class="text-green-600 font-black text-xs">@((room.RentPrice ?? 0).ToString("N0")) đ</span>
+                            </label>
+                        }
+                    }
+                    else
+                    {
+                        <p class="text-center text-gray-400 text-xs py-10 font-bold italic">Tòa nhà hiện không còn phòng trống!</p>
+                    }
+                </div>
+                <div class="flex gap-3 mt-8">
+                    <button type="button" onclick="closeAssignModal()" class="flex-1 py-3 bg-gray-100 text-gray-500 rounded-2xl font-black text-[10px] uppercase tracking-widest">Hủy</button>
+                    <button type="submit" class="flex-1 py-3 bg-orange-500 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-orange-100 hover:bg-black transition-all">Xác nhận vào</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function toggleAddModal() { document.getElementById('addModal').classList.toggle('hidden'); }
+
+        function openAssignModal(id, name) {
+            document.getElementById('resIdField').value = id;
+            document.getElementById('targetName').innerText = name;
+            document.getElementById('assignRoomModal').classList.remove('hidden');
+        }
+
+        function closeAssignModal() { document.getElementById('assignRoomModal').classList.add('hidden'); }
+
+        // Tìm kiếm cư dân thời gian thực
+        document.getElementById('resSearch').addEventListener('keyup', function() {
+            let value = this.value.toLowerCase();
+            document.querySelectorAll('#residentTableBody tr').forEach(row => {
+                row.style.display = row.innerText.toLowerCase().includes(value) ? '' : 'none';
+            });
+        });
+    </script>
+</body>
+</html>

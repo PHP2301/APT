@@ -20,7 +20,7 @@ namespace APT.Data
         public DbSet<UtilityReading> UtilityReadings { get; set; }
         public DbSet<UtilityPrice> UtilityPrices { get; set; }
         public DbSet<Bill> Bills { get; set; }
-        public DbSet<BuildingManager> BuildingManagers { get; set; }
+        public DbSet<BuildingManager> Building_Managers { get; set; }
         public DbSet<ManagerAssignment> ManagerAssignments { get; set; }
         public DbSet<ResidentBuilding> ResidentBuildings { get; set; }
     }

@@ -1,0 +1,213 @@
+﻿@model IEnumerable<APT.Models.Service>
+@{
+    Layout = null;
+    var building = ViewBag.Building as APT.Models.Building;
+    int buildingId = building?.Id ?? 0;
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <title>Bảng giá Dịch vụ - @building?.Name</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        .sidebar-bg {
+            background-color: #7d939e;
+        }
+
+        .btn-active {
+            background-color: #d35400 !important;
+            color: white !important;
+        }
+
+        .table-header {
+            background-color: #2c3e50;
+            color: white;
+        }
+
+        .backdrop-blur {
+            backdrop-filter: blur(4px);
+        }
+    </style>
+</head>
+<body class="flex h-screen bg-[#f8f9fa]">
+
+    <aside class="w-64 sidebar-bg flex flex-col items-center py-8 px-4 text-white shrink-0 shadow-2xl">
+        <div class="w-20 h-20 rounded-full border-4 border-white overflow-hidden mb-4 bg-white">
+            <img src="https://api.dicebear.com/7.x/adventurer/svg?seed=Lucky" alt="Avatar">
+        </div>
+        <p class="font-bold text-sm mb-8 uppercase tracking-widest">Manager</p>
+
+        <div class="w-full space-y-2">
+            <a asp-controller="Dashboard" asp-action="Index" class="flex items-center gap-3 w-full py-2.5 px-6 bg-white text-gray-500 rounded-full font-bold no-underline text-sm shadow-sm">
+                <i class="fa-solid fa-house"></i> Trang chủ
+            </a>
+            <p class="text-[10px] uppercase font-black tracking-widest mt-6 mb-2 opacity-60 px-4 italic">Quản lý tòa nhà</p>
+            <a asp-controller="Apartments" asp-action="Index" asp-route-buildingId="@buildingId" class="flex items-center gap-3 w-full py-2.5 px-6 bg-white text-gray-500 rounded-full font-bold no-underline text-sm">
+                <i class="fa-solid fa-door-open"></i> Danh sách Phòng
+            </a>
+            <a asp-controller="Residents" asp-action="Index" asp-route-buildingId="@buildingId" class="flex items-center gap-3 w-full py-2.5 px-6 bg-white text-gray-500 rounded-full font-bold no-underline text-sm">
+                <i class="fa-solid fa-users"></i> Cư dân
+            </a>
+            <a href="#" class="flex items-center gap-3 w-full py-2.5 px-6 btn-active rounded-full font-bold no-underline text-sm shadow-lg">
+                <i class="fa-solid fa-bell-concierge"></i> Dịch vụ
+            </a>
+        </div>
+        <div class="mt-auto w-full">
+            <a asp-controller="Users" asp-action="Logout" class="flex items-center justify-center gap-2 w-full py-2 bg-white/20 rounded-xl text-white font-bold text-xs no-underline hover:bg-red-500">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i> Đăng xuất
+            </a>
+        </div>
+    </aside>
+
+    <main class="flex-1 p-10 overflow-y-auto">
+        <div class="flex justify-between items-start mb-8">
+            <div>
+                <h2 class="text-2xl font-black text-gray-700 flex items-center gap-2 uppercase">
+                    <i class="fa-solid fa-receipt text-orange-500"></i> Bảng giá Dịch vụ
+                </h2>
+                <p class="text-[10px] text-gray-400 font-bold italic tracking-wide">Cấu hình các khoản phí cho: <span class="text-gray-600">@building?.Name</span></p>
+            </div>
+            <a asp-controller="Dashboard" asp-action="Index" class="text-xs text-gray-400 font-bold hover:underline no-underline italic">← Quay lại Tòa nhà</a>
+        </div>
+
+        @if (TempData["msg_flash"] != null)
+        {
+            <div class="mb-6 p-4 bg-blue-50 text-blue-600 rounded-2xl text-xs font-bold border border-blue-100 flex items-center gap-2">
+                <i class="fa-solid fa-circle-info"></i> @TempData["msg_flash"]
+            </div>
+        }
+
+        <div class="bg-white rounded-[35px] shadow-xl overflow-hidden border border-gray-100 p-8">
+            <div class="flex justify-end mb-6">
+                <button onclick="openAddModal()" class="bg-[#27ae60] text-white px-6 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 shadow-lg hover:bg-[#219150] transition-all">
+                    <i class="fa-solid fa-plus-circle"></i> Thêm dịch vụ
+                </button>
+            </div>
+
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="table-header text-[10px] uppercase tracking-widest">
+                        <th class="px-6 py-4 font-black rounded-tl-2xl">Tên dịch vụ</th>
+                        <th class="px-6 py-4 font-black">Mô tả</th>
+                        <th class="px-6 py-4 font-black text-right">Đơn giá</th>
+                        <th class="px-6 py-4 font-black text-center rounded-tr-2xl">Hành động</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    @foreach (var s in Model)
+                    {
+                        <tr class="hover:bg-gray-50 transition-colors">
+                            <td class="px-6 py-5 font-bold text-gray-700 text-sm">@s.Name</td>
+                            <td class="px-6 py-5 text-gray-400 text-xs italic">@(s.Description ?? "...")</td>
+                            <td class="px-6 py-5 text-right">
+                                <span class="text-[#27ae60] font-black text-lg">@s.Price.ToString("N0")</span>
+                                <span class="bg-gray-100 text-gray-400 px-2 py-0.5 rounded text-[9px] font-bold ml-1 uppercase">@s.Unit</span>
+                            </td>
+                            <td class="px-6 py-5">
+                                <div class="flex justify-center gap-4">
+                                    <button onclick="openEditModal('@s.Id', '@s.Name', '@s.Description', '@s.Price', '@s.Unit')" class="text-blue-400 hover:text-blue-600 transition-transform hover:scale-125">
+                                        <i class="fa-solid fa-pen-to-square"></i>
+                                    </button>
+                                    <form asp-action="Delete" method="post" onsubmit="return confirm('Xác nhận xóa?')">
+                                        <input type="hidden" name="id" value="@s.Id" />
+                                        <input type="hidden" name="return_building" value="@buildingId" />
+                                        <button type="submit" class="text-red-400 hover:text-red-600 transition-transform hover:scale-125">
+                                            <i class="fa-solid fa-trash-can"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <div id="serviceModal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur">
+        <div class="bg-white rounded-[25px] w-full max-w-lg p-8 shadow-2xl relative animate-fade-in">
+            <button onclick="closeModal()" class="absolute right-6 top-6 text-gray-400 hover:text-gray-600">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+
+            <h3 id="modalTitle" class="text-xl font-bold text-gray-800 mb-8 tracking-tight">Thêm Dịch vụ Mới</h3>
+
+            <form id="serviceForm" asp-action="Add" method="post" class="space-y-5">
+                <input type="hidden" name="BuildingId" value="@buildingId" />
+                <input type="hidden" name="Id" id="field_id" />
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1.5 uppercase">Tên dịch vụ *</label>
+                    <input type="text" name="Name" id="field_name" required placeholder="Ví dụ: Gym, Hồ bơi..."
+                           class="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-50 transition-all text-sm" />
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1.5 uppercase">Mô tả / Chú thích</label>
+                    <textarea name="Description" id="field_desc" placeholder="Ghi chú chi tiết..."
+                              class="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-50 transition-all text-sm h-24 resize-none"></textarea>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1.5 uppercase">Đơn giá (VNĐ) *</label>
+                        <input type="number" name="Price" id="field_price" required placeholder="300000"
+                               class="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-50 transition-all text-sm font-medium" />
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1.5 uppercase">Đơn vị tính *</label>
+                        <select name="Unit" id="field_unit" required class="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-50 transition-all text-sm bg-white cursor-pointer appearance-none">
+                            <option value="Tháng">Tháng</option>
+                            <option value="Lần">Lần</option>
+                            <option value="m3">m3</option>
+                            <option value="KWh">KWh</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-3 pt-6">
+                    <button type="button" onclick="closeModal()" class="px-6 py-2.5 rounded-lg bg-gray-100 text-gray-600 font-bold text-sm hover:bg-gray-200">Hủy</button>
+                    <button type="submit" class="px-8 py-2.5 rounded-lg bg-[#2c3e50] text-white font-bold text-sm shadow-lg hover:bg-black transition-all active:scale-95">Lưu lại</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const modal = document.getElementById('serviceModal');
+        const form = document.getElementById('serviceForm');
+
+        // 1. Khi bấm nút "Thêm dịch vụ"
+        function openAddModal() {
+            document.getElementById('modalTitle').innerText = "Thêm Dịch vụ Mới";
+            form.action = "/Services/Add"; // Trỏ về hàm Add
+            form.reset(); // Xóa sạch dữ liệu cũ trong các ô
+            modal.classList.remove('hidden');
+        }
+
+        // 2. Khi bấm nút "Sửa" (Cái icon hình cây bút xanh)
+
+        function openEditModal(id, name, desc, price, unit) {
+            document.getElementById('modalTitle').innerText = "Cập nhật Dịch vụ"; // Đổi tiêu đề giống ảnh Đại Ca gửi
+            form.action = "/Services/Update"; // Trỏ về hàm Update trong Controller
+
+            // Điền dữ liệu cũ vào các ô input
+            document.getElementById('field_id').value = id;
+            document.getElementById('field_name').value = name;
+            document.getElementById('field_desc').value = desc;
+            document.getElementById('field_price').value = price;
+            document.getElementById('field_unit').value = unit;
+
+            modal.classList.remove('hidden');
+        }
+
+        // 3. Đóng Modal
+        function closeModal() {
+            modal.classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
