@@ -9,7 +9,7 @@ using System.Linq;
 
 namespace APT.Controllers
 {
-    public class ResidentsController : BaseController
+    public class ResidentsController : Controller
     {
         private readonly ApplicationDbContext _context;
 
@@ -18,203 +18,204 @@ namespace APT.Controllers
             _context = context;
         }
 
-        // =======================================================
-        // 1. TRANG CHỦ DÀNH CHO CƯ DÂN (RESIDENT DASHBOARD)
-        // =======================================================
-        public IActionResult Index()
+        // ==========================================
+        // 1. DANH SÁCH CƯ DÂN (DÀNH CHO ADMIN)
+        // ==========================================
+        public IActionResult Index(int building_id)
         {
-            int? user_id = HttpContext.Session.GetInt32("user_id");
-            if (user_id == null) return RedirectToAction("Login", "Users");
-
-            var resident = _context.Residents
-                .Include(r => r.Building)
-                .Include(r => r.Apartments)
-                .FirstOrDefault(r => r.user_id == user_id);
-
-            if (resident == null) return NotFound("Không tìm thấy thông tin cư dân.");
-
-            var apartment = resident.Apartments?.FirstOrDefault();
-
-            if (apartment != null)
+            if (building_id == 0)
             {
-                ViewBag.LatestBill = _context.Bills
-                    .Where(b => b.RoomId == apartment.Id && b.Status == false)
-                    .OrderByDescending(b => b.CreatedAt)
-                    .FirstOrDefault();
-
-                ViewBag.Services = _context.Services
-                    .Where(s => s.building_id == resident.building_id)
-                    .ToList();
-
-                ViewBag.Apartment = apartment;
+                building_id = HttpContext.Session.GetInt32("current_building_id") ?? 1;
             }
 
-            return View("Resident", resident);
-        }
+            var residents = _context.Users
+                .Include(u => u.Apartments)
+                .Where(u => u.Role == "resident")
+                .ToList();
 
-        // =======================================================
-        // 2. QUẢN LÝ DANH SÁCH CƯ DÂN (DÀNH CHO MANAGER)
-        // =======================================================
-        public IActionResult ListByBuilding(int building_id)
-        {
-            var residents = _context.Residents
-                .Where(r => r.building_id == building_id)
-                .Include(r => r.Apartments)
+            ViewBag.EmptyRooms = _context.Apartments
+                .Where(a => a.building_id == building_id && (a.ResidentId == null || a.Status == "Available"))
                 .ToList();
 
             ViewBag.building_id = building_id;
             return View(residents);
         }
 
-        public IActionResult AddToApartment(int apartmentId)
+        // ==========================================
+        // 2. MỞ TRANG THÊM/SỬA CƯ DÂN (GET)
+        // ==========================================
+        [HttpGet]
+        public IActionResult Edit(int? id, int building_id)
         {
-            var apartment = _context.Apartments
-                .Include(a => a.Building)
-                .FirstOrDefault(a => a.Id == apartmentId);
+            ViewBag.building_id = building_id;
 
-            if (apartment == null) return NotFound();
-
-            var freeResidents = _context.Residents
-                .Where(r => !_context.Apartments.Any(a => a.ResidentId == r.Id))
-                .ToList();
-
-            ViewBag.Apartment = apartment;
-            ViewBag.FreeResidents = freeResidents;
-            ViewBag.building_id = apartment.building_id;
-
-            return View();
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public IActionResult ProcessAddToApartment(Resident model, int apartmentId)
-        {
-            // Bỏ qua validate các object liên quan để tránh ModelState.IsValid = false
-            ModelState.Remove("Building");
-            ModelState.Remove("User");
-            ModelState.Remove("Apartments");
-
-            if (ModelState.IsValid)
+            // Nếu ID = 0 hoặc null -> Chế độ THÊM MỚI
+            if (id == null || id == 0)
             {
-                // Lấy thông tin căn hộ để lấy building_id chính xác
-                var apartment = _context.Apartments.Find(apartmentId);
-                if (apartment == null) return NotFound();
-
-                // FIX LỖI FOREIGN KEY: Gán building_id từ căn hộ cho cư dân mới
-                model.building_id = apartment.building_id;
-
-                _context.Residents.Add(model);
-                _context.SaveChanges(); // Lưu Resident trước để lấy ID
-
-                // Gán cư dân vào phòng
-                apartment.ResidentId = model.Id;
-                apartment.Status = "Occupied";
-                _context.SaveChanges();
-
-                TempData["msg_flash"] = "Đã thêm chủ hộ và bàn giao phòng thành công!";
-                return RedirectToAction("Index", "Apartments", new { building_id = apartment.building_id });
+                return View(new User());
             }
 
-            // Nếu lỗi, phải nạp lại dữ liệu cho View
-            ViewBag.Apartment = _context.Apartments.Include(a => a.Building).FirstOrDefault(a => a.Id == apartmentId);
-            return View("AddToApartment", model);
+            // Nếu có ID -> Chế độ CHỈNH SỬA
+            var user = _context.Users.Find(id);
+            if (user == null) return NotFound();
+
+            return View(user);
         }
 
+        // ==========================================
+        // 3. XỬ LÝ LƯU DỮ LIỆU CƯ DÂN (POST)
+        // ==========================================
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult AssignExistingResident(int residentId, int apartmentId)
+        public IActionResult Edit(User model, int? building_id, int? apartment_id)
         {
-            var apartment = _context.Apartments.Find(apartmentId);
-            var resident = _context.Residents.Find(residentId);
+            // Xóa sạch lỗi Validation để ép buộc lưu dữ liệu
+            ModelState.Clear();
 
-            if (apartment != null && resident != null)
+            int finalBId = building_id ?? 1;
+
+            try
             {
-                // Cập nhật cư dân vào phòng
-                apartment.ResidentId = residentId;
-                apartment.Status = "Occupied";
+                if (model.Id == 0)
+                {
+                    // --- LOGIC THÊM MỚI ---
+                    model.Role = "resident";
+                    model.Password = "123456"; // Pass mặc định
+                    model.CreatedAt = DateTime.Now;
 
-                // Đồng bộ building_id của cư dân với tòa nhà của phòng (nếu cần)
-                resident.building_id = apartment.building_id;
+                    _context.Users.Add(model);
+                    _context.SaveChanges(); // Lưu để lấy ID cư dân mới
 
-                _context.SaveChanges();
-                TempData["msg_flash"] = "Đã gán cư dân vào phòng thành công!";
+                    // --- TỰ ĐỘNG GÁN VÀO PHÒNG ---
+                    if (apartment_id.HasValue && apartment_id > 0)
+                    {
+                        var apt = _context.Apartments.Find(apartment_id.Value);
+                        if (apt != null)
+                        {
+                            apt.ResidentId = model.Id;
+                            apt.Status = "Occupied"; // Đổi sang Đang ở
+                            _context.SaveChanges();
+                            TempData["msg_flash"] = $"Đã thêm {model.FullName} và bàn giao phòng {apt.FullRoomName}!";
+                        }
+                    }
+                    else
+                    {
+                        TempData["msg_flash"] = "Thêm cư dân mới thành công!";
+                    }
+                }
+                else
+                {
+                    // --- LOGIC CẬP NHẬT ---
+                    var userInDb = _context.Users.Find(model.Id);
+                    if (userInDb == null) return NotFound();
 
-                return RedirectToAction("Index", "Apartments", new { building_id = apartment.building_id });
+                    userInDb.FullName = model.FullName;
+                    userInDb.Phone = model.Phone;
+                    userInDb.Email = model.Email;
+                    userInDb.IdCard = model.IdCard;
+                    userInDb.Gender = model.Gender;
+                    userInDb.Dob = model.Dob;
+
+                    _context.SaveChanges();
+                    TempData["msg_flash"] = "Cập nhật hồ sơ thành công!";
+                }
+
+                // Quay về danh sách phòng tòa nhà
+                return RedirectToAction("Index", "Apartments", new { building_id = finalBId });
             }
-            return RedirectToAction("Dashboard", "Admin");
+            catch (Exception ex)
+            {
+                TempData["msg_flash"] = "Lỗi Database: " + ex.Message;
+                ViewBag.building_id = finalBId;
+                return View(model);
+            }
         }
 
-        // =======================================================
-        // 3. CẬP NHẬT & XÓA
-        // =======================================================
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public IActionResult Edit(Resident model)
+        // ==========================================
+        // 4. TRANG CÁ NHÂN CỦA CƯ DÂN (DASHBOARD)
+        // ==========================================
+        public IActionResult User()
         {
-            var resident = _context.Residents.Find(model.Id);
-            if (resident != null)
-            {
-                resident.FullName = model.FullName;
-                resident.phone = model.phone;
-                resident.id_card = model.id_card;
-                resident.email = model.email;
-                resident.dob = model.dob;
-                resident.gender = model.gender;
+            int? userId = HttpContext.Session.GetInt32("user_id");
+            if (userId == null) return RedirectToAction("Login", "Users");
 
-                _context.SaveChanges();
-                TempData["msg_flash"] = "Cập nhật thông tin thành công!";
-                return RedirectToAction("ListByBuilding", new { building_id = resident.building_id });
+            var resident = _context.Users
+                .Include(u => u.Apartments)
+                .FirstOrDefault(u => u.Id == userId);
+
+            if (resident == null) return NotFound();
+
+            var apartment = resident.Apartments?.FirstOrDefault();
+
+            if (apartment != null)
+            {
+                var bill = _context.Bills
+                    .Where(b => b.RoomId == apartment.Id && b.Status == false)
+                    .OrderByDescending(b => b.CreatedAt)
+                    .FirstOrDefault();
+
+                if (bill == null)
+                {
+                    bill = _context.Bills
+                        .Where(b => b.RoomId == apartment.Id)
+                        .OrderByDescending(b => b.CreatedAt)
+                        .FirstOrDefault();
+                }
+
+                ViewBag.LatestBill = bill;
+                ViewBag.Apartment = apartment;
             }
-            return RedirectToAction("Dashboard", "Admin");
+
+            ViewBag.Services = _context.Services.ToList();
+            return View(resident);
         }
 
+        // ==========================================
+        // 5. XÓA CƯ DÂN (GIẢI PHÓNG PHÒNG)
+        // ==========================================
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Delete(int id)
         {
-            var resident = _context.Residents.Find(id);
-            if (resident != null)
-            {
-                int? bId = resident.building_id;
+            var user = _context.Users.Include(u => u.Apartments).FirstOrDefault(u => u.Id == id);
 
-                // Giải phóng các phòng đang thuê
-                var rooms = _context.Apartments.Where(a => a.ResidentId == id).ToList();
-                foreach (var r in rooms)
+            if (user != null)
+            {
+                int bId = user.Apartments.FirstOrDefault()?.building_id ?? 1;
+
+                foreach (var apt in user.Apartments)
                 {
-                    r.ResidentId = null;
-                    r.Status = "Available";
+                    apt.ResidentId = null;
+                    apt.Status = "Available";
                 }
 
-                _context.Residents.Remove(resident);
+                _context.Users.Remove(user);
                 _context.SaveChanges();
-                return RedirectToAction("ListByBuilding", new { building_id = bId });
+
+                TempData["msg_flash"] = "Đã xóa cư dân và giải phóng phòng!";
+                return RedirectToAction("Index", "Apartments", new { building_id = bId });
             }
-            return RedirectToAction("Dashboard", "Admin");
+            return RedirectToAction("Index", "Dashboard");
         }
 
+        // ==========================================
+        // 6. GÁN CƯ DÂN VÀO PHÒNG (DÀNH CHO MODAL)
+        // ==========================================
         [HttpPost]
-        public IActionResult RegisterServices(List<int> serviceIds)
+        [ValidateAntiForgeryToken]
+        public IActionResult AssignRoom(int residentId, int apartmentId, int building_id)
         {
-            int? user_id = HttpContext.Session.GetInt32("user_id");
-            var resident = _context.Residents.Include(r => r.Apartments).FirstOrDefault(r => r.user_id == user_id);
-            var apartmentId = resident?.Apartments?.FirstOrDefault()?.Id;
+            var apartment = _context.Apartments.Find(apartmentId);
+            var resident = _context.Users.Find(residentId);
 
-            if (apartmentId != null && serviceIds != null)
+            if (apartment != null && resident != null)
             {
-                foreach (var sId in serviceIds)
-                {
-                    _context.ApartmentServices.Add(new ApartmentService
-                    {
-                        ApartmentId = apartmentId.Value,
-                        ServiceId = sId,
-                        RegistrationDate = DateTime.Now
-                    });
-                }
+                apartment.ResidentId = residentId;
+                apartment.Status = "Occupied";
                 _context.SaveChanges();
-                TempData["msg_flash"] = "Đã đăng ký dịch vụ thành công!";
+                TempData["msg_flash"] = $"Đã gán {resident.FullName} vào phòng {apartment.FullRoomName}!";
             }
-
-            return RedirectToAction("Index");
+            return RedirectToAction("Index", new { building_id = building_id });
         }
     }
 }

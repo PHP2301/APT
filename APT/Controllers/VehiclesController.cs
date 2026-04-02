@@ -1,123 +1,104 @@
-﻿using APT.Data;
-using APT.Models;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+﻿//using APT.Data;
+//using APT.Models;
+//using Microsoft.AspNetCore.Mvc;
+//using Microsoft.EntityFrameworkCore;
+//using System;
+//using System.Linq;
 
-namespace APT.Controllers
-{
-    public class VehiclesController : BaseController
-    {
-        private readonly ApplicationDbContext _context;
+//namespace APT.Controllers
+//{
+//    public class VehiclesController : Controller
+//    {
+//        private readonly ApplicationDbContext _context;
 
-        public VehiclesController(ApplicationDbContext context)
-        {
-            _context = context;
-        }
+//        public VehiclesController(ApplicationDbContext context)
+//        {
+//            _context = context;
+//        }
 
-        public IActionResult Index(int buildingId)
-        {
-            // 1. Lấy thông tin tòa nhà
-            var building = _context.Buildings.Find(buildingId);
-            ViewBag.BuildingName = building?.Name ?? "IDICO";
+//        // 1. TRANG DANH SÁCH XE CỦA TÒA NHÀ
+//        public IActionResult Index(int buildingId)
+//        {
+//            var building = _context.Buildings.Find(buildingId);
+//            ViewBag.BuildingName = building?.Name ?? "Tòa nhà";
+//            ViewBag.BuildingId = buildingId;
 
-            // 2. Lấy danh sách hầm kèm theo danh sách xe trong mỗi hầm để đếm
-            var basements = _context.Basements
-                .Where(b => b.BuildingId == buildingId)
-                .Include(b => b.Vehicles) // Cần nạp danh sách xe để đếm ở View
-                .ToList();
+//            // CHỐT HẠ: Chỉ Include Apartment, tuyệt đối KHÔNG Include Basement hay Resident ở đây
+//            var vehicles = _context.Vehicles
+//                .Include(v => v.Apartment)
+//                .Where(v => v.building_id == buildingId) // Dùng trực tiếp building_id trong bảng Vehicles cho lẹ
+//                .ToList();
 
-            ViewBag.BuildingId = buildingId;
-            return View(basements); // Trả về danh sách Basements
-        }
+//            return View(vehicles);
+//        }
 
-        public IActionResult Register(int buildingId)
-        {
-            ViewBag.BuildingId = buildingId;
+//        // 2. TRANG ĐĂNG KÝ XE MỚI
+//        public IActionResult Register(int buildingId)
+//        {
+//            ViewBag.BuildingId = buildingId;
 
-            ViewBag.Basements = _context.Basements
-                .Where(b => b.BuildingId == buildingId)
-                .ToList();
+//            // Lấy danh sách căn hộ để chọn khi đăng ký xe
+//            ViewBag.Apartments = _context.Apartments
+//                .Where(a => a.building_id == buildingId)
+//                .ToList();
 
-            return View();
-        }
+//            return View();
+//        }
 
-        [HttpPost]
-        public IActionResult Register(Vehicle model)
-        {
-            var basement = _context.Basements
-                .FirstOrDefault(b => b.Id == model.BasementId);
+//        // 3. XỬ LÝ LƯU ĐĂNG KÝ XE
+//        [HttpPost]
+//        [ValidateAntiForgeryToken]
+//        public IActionResult Register(Vehicle model)
+//        {
+//            // Xóa bỏ kiểm tra các quan hệ phức tạp có thể gây lỗi ModelState
+//            ModelState.Remove("Apartment");
+//            ModelState.Remove("Building");
 
-            if (basement == null)
-                return NotFound();
+//            if (ModelState.IsValid)
+//            {
+//                try
+//                {
+//                    // Đảm bảo gán đúng BuildingId từ form hoặc từ Apartment
+//                    var apartment = _context.Apartments.Find(model.ApartmentId);
+//                    if (apartment != null)
+//                    {
+//                        model.building_id = apartment.building_id;
+//                    }
 
-            int currentMotorbikes = _context.Vehicles
-                .Where(v => v.BasementId == model.BasementId && v.VehicleType == "motorbike")
-                .Count();
+//                    _context.Vehicles.Add(model);
+//                    _context.SaveChanges();
 
-            int currentCars = _context.Vehicles
-                .Where(v => v.BasementId == model.BasementId && v.VehicleType == "car")
-                .Count();
+//                    TempData["msg_flash"] = "Đăng ký xe thành công!";
+//                    return RedirectToAction("Index", new { buildingId = model.building_id });
+//                }
+//                catch (Exception ex)
+//                {
+//                    ModelState.AddModelError("", "Lỗi hệ thống: " + ex.Message);
+//                }
+//            }
 
-            if (model.VehicleType == "motorbike")
-            {
-                if (currentMotorbikes >= basement.MaxMotorbikes)
-                {
-                    ModelState.AddModelError("", "Motorbike parking is full");
-                    return View(model);
-                }
-            }
+//            ViewBag.BuildingId = model.building_id;
+//            ViewBag.Apartments = _context.Apartments.Where(a => a.building_id == model.building_id).ToList();
+//            return View(model);
+//        }
 
-            if (model.VehicleType == "car")
-            {
-                if (currentCars >= basement.MaxCars)
-                {
-                    ModelState.AddModelError("", "Car parking is full");
-                    return View(model);
-                }
-            }
+//        // 4. XÓA XE
+//        [HttpPost]
+//        [ValidateAntiForgeryToken]
+//        public IActionResult Delete(int id)
+//        {
+//            var vehicle = _context.Vehicles.Find(id);
 
-            model.CreatedAt = DateTime.Now;
+//            if (vehicle != null)
+//            {
+//                int bId = vehicle.building_id;
+//                _context.Vehicles.Remove(vehicle);
+//                _context.SaveChanges();
+//                TempData["msg_flash"] = "Đã xóa xe thành công.";
+//                return RedirectToAction("Index", new { buildingId = bId });
+//            }
 
-            _context.Vehicles.Add(model);
-            _context.SaveChanges();
-
-            return RedirectToAction("Index",
-                new { buildingId = model.BuildingId });
-        }
-
-        public IActionResult Delete(int id)
-        {
-            var vehicle = _context.Vehicles.Find(id);
-
-            if (vehicle != null)
-            {
-                int buildingId = vehicle.BuildingId;
-
-                _context.Vehicles.Remove(vehicle);
-                _context.SaveChanges();
-
-                return RedirectToAction("Index",
-                    new { buildingId });
-            }
-
-            return RedirectToAction("Index");
-        }
-        [HttpPost]
-        public IActionResult UpdateBasement(Basement model)
-        {
-            var basement = _context.Basements.Find(model.Id);
-            if (basement != null)
-            {
-                basement.MaxMotorbikes = model.MaxMotorbikes;
-                basement.MaxCars = model.MaxCars;
-                // Nếu DB có cột giá vé thì Đại Ca gán thêm ở đây
-                // basement.MotorbikePrice = model.MotorbikePrice;
-                // basement.CarPrice = model.CarPrice;
-
-                _context.SaveChanges();
-                TempData["msg_flash"] = "Cập nhật cấu hình hầm thành công!";
-            }
-            return RedirectToAction("Index", new { buildingId = basement?.BuildingId });
-        }
-    }
-}
+//            return RedirectToAction("Index", "Dashboard");
+//        }
+//    }
+//}

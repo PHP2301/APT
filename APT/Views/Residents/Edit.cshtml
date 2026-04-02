@@ -1,17 +1,23 @@
-﻿@model APT.Models.Resident
+﻿@model APT.Models.User
 @{
     Layout = null;
-    // Lấy building_id từ ViewBag (đã sửa tên biến cho đồng bộ)
     int bId = ViewBag.building_id ?? 0;
+    bool isEdit = Model?.Id > 0;
 }
 
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="utf-8" />
-    <title>Chỉnh sửa cư dân - @Model?.FullName</title>
+    <title>@(isEdit ? "Chỉnh sửa" : "Thêm mới") Cư dân - APT Management</title>
+
+    @* 1. NẠP JQUERY TRƯỚC TIÊN *@
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+
+    @* 2. THƯ VIỆN GIAO DIỆN *@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+
     <style>
         .sidebar-bg {
             background-color: #7d939e;
@@ -20,74 +26,101 @@
         .btn-orange {
             background-color: #d35400;
         }
+
+        input:focus, select:focus {
+            border-color: #d35400 !important;
+            outline: none !important;
+            box-shadow: 0 0 0 4px rgba(211, 84, 0, 0.1) !important;
+        }
     </style>
 </head>
-<body class="flex h-screen bg-[#f1f3f5]">
+<body class="flex h-screen bg-[#f1f3f5] font-sans">
 
+    @* --- THANH SIDEBAR --- *@
     <aside class="w-64 sidebar-bg flex flex-col items-center py-8 px-4 text-white shrink-0 shadow-2xl">
-        <div class="w-20 h-20 rounded-full border-4 border-white overflow-hidden mb-4 bg-white">
-            <img src="https://api.dicebear.com/7.x/adventurer/svg?seed=@Model?.FullName" alt="Avatar">
+        <div class="w-20 h-20 rounded-full border-4 border-white overflow-hidden mb-4 bg-white flex items-center justify-center">
+            <img src="https://api.dicebear.com/7.x/adventurer/svg?seed=@(isEdit ? Model.FullName : "NewUser")" alt="Avatar">
         </div>
-        <p class="font-bold text-sm mb-8 uppercase tracking-widest text-center">@Model?.FullName</p>
+        <p class="font-black text-xs mb-8 uppercase tracking-[3px] text-center opacity-80">
+            @(isEdit ? Model.FullName : "Thành viên mới")
+        </p>
+
         <div class="w-full space-y-2">
-            <a asp-controller="Dashboard" asp-action="Index" class="flex items-center gap-3 w-full py-2.5 px-6 bg-white text-gray-500 rounded-full font-bold no-underline text-sm shadow-sm hover:bg-gray-100 transition-all">
+            <a asp-controller="Dashboard" asp-action="Index" class="flex items-center gap-3 w-full py-2.5 px-6 bg-white/10 text-white rounded-xl font-bold no-underline text-sm hover:bg-white/20 transition-all">
                 <i class="fa-solid fa-house"></i> Trang chủ
             </a>
-            @* Sửa buildingId -> building_id *@
-            <a asp-action="ListByBuilding" asp-route-building_id="@bId" class="flex items-center gap-3 w-full py-2.5 px-6 bg-[#d35400] text-white rounded-full font-bold no-underline text-sm shadow-lg">
+            <a asp-controller="Residents" asp-action="Index" asp-route-building_id="@bId" class="flex items-center gap-3 w-full py-2.5 px-6 bg-[#d35400] text-white rounded-xl font-bold no-underline text-sm shadow-lg hover:translate-x-1 transition-all">
                 <i class="fa-solid fa-users"></i> Danh sách Cư dân
             </a>
         </div>
     </aside>
 
     <main class="flex-1 p-8 overflow-y-auto flex justify-center items-center">
-        <div class="w-full max-w-4xl bg-white rounded-[40px] shadow-2xl p-10 border-t-[8px] border-orange-500 relative">
+        <div class="w-full max-w-4xl bg-white rounded-[40px] shadow-2xl p-12 border-t-[10px] border-orange-500 relative">
 
+            @* --- TIÊU ĐỀ BIẾN THIÊN --- *@
             <div class="text-center mb-10">
-                <h2 class="text-3xl font-black text-[#d35400] uppercase flex items-center justify-center gap-3 tracking-tighter">
-                    <i class="fa-solid fa-user-pen"></i> Chỉnh sửa thông tin Cư dân
+                <div class="inline-flex items-center justify-center w-16 h-16 bg-orange-50 text-[#d35400] rounded-3xl mb-4">
+                    <i class="fa-solid @(isEdit ? "fa-user-pen" : "fa-user-plus") text-2xl"></i>
+                </div>
+                <h2 class="text-3xl font-black text-gray-800 uppercase tracking-tighter">
+                    @(isEdit ? "Cập nhật cư dân" : "Thêm cư dân mới")
                 </h2>
-                <p class="text-xs text-gray-400 font-bold mt-1 uppercase tracking-widest opacity-60">Cập nhật hồ sơ & Quản lý phương tiện</p>
+                <p class="text-[10px] text-gray-400 font-bold mt-1 uppercase tracking-widest opacity-60">Quản lý hồ sơ cư dân tòa nhà</p>
             </div>
 
-            <form asp-action="Edit" method="post">
+            @* Hiển thị lỗi từ ModelState nếu có *@
+            <div asp-validation-summary="ModelOnly" class="mb-4 text-sm text-red-600 font-bold text-center"></div>
+
+            @* --- FORM XỬ LÝ --- *@
+            <form asp-controller="Residents" asp-action="Edit" method="post" class="space-y-6">
                 @Html.AntiForgeryToken()
+
+                @* CÁC TRƯỜNG ẨN QUAN TRỌNG *@
                 <input type="hidden" asp-for="Id" />
                 <input type="hidden" name="building_id" value="@bId" />
+                <input type="hidden" name="apartment_id" value="@Context.Request.Query["apartment_id"]" />
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    @* Họ và tên *@
+                    <div class="space-y-2">
+                        <label class="block text-[11px] font-black text-gray-400 uppercase ml-1 tracking-wider">Họ và tên *</label>
+                        <input type="text" asp-for="FullName" placeholder="Nhập tên cư dân..."
+                               class="w-full px-6 py-4 bg-gray-50 border-2 border-transparent rounded-2xl outline-none focus:bg-white focus:border-orange-500 transition-all text-sm font-bold text-gray-700" required />
+                        <span asp-validation-for="FullName" class="text-red-500 text-xs"></span>
+                    </div>
 
-                <div class="grid grid-cols-2 gap-8 mb-6">
-                    <div>
-                        <label class="block text-[11px] font-black text-gray-400 uppercase mb-2 ml-1">Họ và tên *</label>
-                        <input type="text" asp-for="FullName" class="w-full px-5 py-3 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-4 focus:ring-orange-100 focus:border-orange-400 transition-all text-sm font-bold text-gray-700" required />
+                    @* Số điện thoại *@
+                    <div class="space-y-2">
+                        <label class="block text-[11px] font-black text-gray-400 uppercase ml-1 tracking-wider">Số điện thoại *</label>
+                        <input type="text" asp-for="Phone" placeholder="090..."
+                               class="w-full px-6 py-4 bg-gray-50 border-2 border-transparent rounded-2xl outline-none focus:bg-white focus:border-orange-500 transition-all text-sm font-bold text-gray-700" required />
                     </div>
-                    <div>
-                        <label class="block text-[11px] font-black text-gray-400 uppercase mb-2 ml-1">Số điện thoại *</label>
-                        <input type="text" asp-for="phone" class="w-full px-5 py-3 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-4 focus:ring-orange-100 focus:border-orange-400 transition-all text-sm font-bold text-gray-700" required />
-                    </div>
-                </div>
 
-                <div class="grid grid-cols-2 gap-8 mb-6">
-                    <div>
-                        @* Sửa Cid -> id_card *@
-                        <label class="block text-[11px] font-black text-gray-400 uppercase mb-2 ml-1">CCCD / CMND (id_card) *</label>
-                        <input type="text" asp-for="id_card" class="w-full px-5 py-3 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-4 focus:ring-orange-100 focus:border-orange-400 transition-all text-sm font-bold text-gray-700" required />
+                    @* CMND / CCCD *@
+                    <div class="space-y-2">
+                        <label class="block text-[11px] font-black text-gray-400 uppercase ml-1 tracking-wider">Số CCCD / CMND *</label>
+                        <input type="text" asp-for="IdCard" placeholder="Số định danh..."
+                               class="w-full px-6 py-4 bg-gray-50 border-2 border-transparent rounded-2xl outline-none focus:bg-white focus:border-orange-500 transition-all text-sm font-bold text-gray-700" required />
                     </div>
-                    <div>
-                        @* Sửa Email -> email *@
-                        <label class="block text-[11px] font-black text-gray-400 uppercase mb-2 ml-1">Email liên hệ *</label>
-                        <input type="email" asp-for="email" class="w-full px-5 py-3 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-4 focus:ring-orange-100 focus:border-orange-400 transition-all text-sm font-bold text-gray-700" required />
-                    </div>
-                </div>
 
-                <div class="grid grid-cols-2 gap-8 mb-10">
-                    <div>
-                        <label class="block text-[11px] font-black text-gray-400 uppercase mb-2 ml-1">Ngày sinh (dob)</label>
-                        <input type="date" asp-for="dob" class="w-full px-5 py-3 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-4 focus:ring-orange-100 focus:border-orange-400 transition-all text-sm font-bold text-gray-700" />
+                    @* Email *@
+                    <div class="space-y-2">
+                        <label class="block text-[11px] font-black text-gray-400 uppercase ml-1 tracking-wider">Email liên hệ *</label>
+                        <input type="email" asp-for="Email" placeholder="example@gmail.com"
+                               class="w-full px-6 py-4 bg-gray-50 border-2 border-transparent rounded-2xl outline-none focus:bg-white focus:border-orange-500 transition-all text-sm font-bold text-gray-700" required />
                     </div>
-                    <div>
-                        @* Sửa Gender -> gender *@
-                        <label class="block text-[11px] font-black text-gray-400 uppercase mb-2 ml-1">Giới tính</label>
-                        <select asp-for="gender" class="w-full px-5 py-3 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-4 focus:ring-orange-100 focus:border-orange-400 transition-all text-sm font-bold text-gray-700">
+
+                    @* Ngày sinh *@
+                    <div class="space-y-2">
+                        <label class="block text-[11px] font-black text-gray-400 uppercase ml-1 tracking-wider">Ngày sinh</label>
+                        <input type="date" asp-for="Dob"
+                               class="w-full px-6 py-4 bg-gray-50 border-2 border-transparent rounded-2xl outline-none focus:bg-white focus:border-orange-500 transition-all text-sm font-bold text-gray-700" />
+                    </div>
+
+                    @* Giới tính *@
+                    <div class="space-y-2">
+                        <label class="block text-[11px] font-black text-gray-400 uppercase ml-1 tracking-wider">Giới tính</label>
+                        <select asp-for="Gender" class="w-full px-6 py-4 bg-gray-50 border-2 border-transparent rounded-2xl outline-none focus:bg-white focus:border-orange-500 transition-all text-sm font-bold text-gray-700">
                             <option value="Nam">Nam</option>
                             <option value="Nữ">Nữ</option>
                             <option value="Khác">Khác</option>
@@ -95,35 +128,26 @@
                     </div>
                 </div>
 
-                @* Phần Đăng ký phương tiện *@
-                <div class="bg-amber-50/50 border-2 border-dashed border-amber-200 rounded-[30px] p-8 mb-10">
-                    <h4 class="text-sm font-black text-[#d35400] mb-6 flex items-center gap-2 uppercase tracking-tighter">
-                        <i class="fa-solid fa-motorcycle text-xl"></i> Đăng ký phương tiện mới
-                    </h4>
-                    <div class="grid grid-cols-2 gap-6">
-                        <div class="col-span-1">
-                            <label class="block text-[10px] font-black text-amber-500 uppercase mb-2 ml-1">Loại xe</label>
-                            <select name="VehicleType" class="w-full px-5 py-3 bg-white border border-amber-100 rounded-xl outline-none focus:ring-4 focus:ring-amber-100 text-sm font-bold">
-                                <option value="motorbike">Xe máy</option>
-                                <option value="car">Ô tô</option>
-                            </select>
-                        </div>
-                        <div class="col-span-1">
-                            <label class="block text-[10px] font-black text-amber-500 uppercase mb-2 ml-1">Biển số xe</label>
-                            <input type="text" name="LicensePlate" placeholder="VD: 59-X1 123.45" class="w-full px-5 py-3 bg-white border border-amber-100 rounded-xl outline-none focus:ring-4 focus:ring-amber-100 text-sm font-bold" />
-                        </div>
+                @* --- NÚT THAO TÁC --- *@
+                <div class="flex flex-col md:flex-row justify-between items-center pt-10 border-t border-dashed border-gray-100">
+                    <div>
+                        @if (isEdit)
+                        {
+                            <button type="button" onclick="confirmDelete(@Model.Id)"
+                                    class="text-rose-500 text-[11px] font-black uppercase tracking-widest px-8 py-3 border-2 border-rose-50 rounded-2xl hover:bg-rose-500 hover:text-white transition-all">
+                                <i class="fa-solid fa-trash-can mr-2"></i> Xóa cư dân
+                            </button>
+                        }
                     </div>
-                </div>
 
-                <div class="flex justify-between items-center pt-8 border-t border-gray-100">
-                    <button type="button" onclick="confirmDelete(@Model?.Id)" class="text-rose-500 text-[11px] font-black uppercase tracking-widest px-6 py-2 border border-rose-100 rounded-xl hover:bg-rose-50 transition-all">
-                        <i class="fa-solid fa-user-minus mr-1"></i> Xóa cư dân
-                    </button>
-
-                    <div class="flex gap-4">
-                        <a asp-action="ListByBuilding" asp-route-building_id="@bId" class="px-10 py-3 bg-gray-100 text-gray-500 rounded-2xl font-black text-[11px] uppercase tracking-widest no-underline hover:bg-gray-200 transition-all">Hủy bỏ</a>
-                        <button type="submit" class="px-10 py-3 btn-orange text-white rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-xl shadow-orange-200 hover:opacity-90 active:scale-95 transition-all">
-                            <i class="fa-solid fa-check-double mr-2"></i> Lưu & Cập nhật
+                    <div class="flex gap-4 mt-6 md:mt-0">
+                        <a asp-controller="Residents" asp-action="Index" asp-route-building_id="@bId"
+                           class="px-12 py-4 bg-gray-100 text-gray-400 rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-gray-200 transition-all text-center no-underline">
+                            Hủy bỏ
+                        </a>
+                        <button type="submit"
+                                class="px-12 py-4 btn-orange text-white rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-xl shadow-orange-200 hover:opacity-90 active:scale-95 transition-all">
+                            <i class="fa-solid fa-cloud-arrow-up mr-2 text-base"></i> Lưu dữ liệu
                         </button>
                     </div>
                 </div>
@@ -131,17 +155,34 @@
         </div>
     </main>
 
-    @* Form ẩn để xử lý xóa *@
+    @* --- FORM XÓA ẨN --- *@
     <form id="deleteForm" asp-action="Delete" method="post" style="display:none;">
+        @Html.AntiForgeryToken()
         <input type="hidden" name="id" id="deleteId" />
     </form>
 
+    @* --- SCRIPTS --- *@
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.5/jquery.validate.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/3.2.12/jquery.validate.unobtrusive.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <script>
         function confirmDelete(id) {
-            if (confirm("Đại Ca có chắc muốn xóa cư dân này không? Mọi căn hộ của họ sẽ trở về trạng thái trống!")) {
-                document.getElementById('deleteId').value = id;
-                document.getElementById('deleteForm').submit();
-            }
+            Swal.fire({
+                title: 'Xóa cư dân?',
+                text: "Dữ liệu cư dân và căn hộ đang thuê sẽ bị giải phóng!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#e11d48',
+                cancelButtonColor: '#94a3b8',
+                confirmButtonText: 'Đúng, xóa luôn!',
+                cancelButtonText: 'Hủy'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('deleteId').value = id;
+                    document.getElementById('deleteForm').submit();
+                }
+            });
         }
     </script>
 </body>

@@ -3,12 +3,9 @@
     Layout = null;
     var res = Model?.Resident;
 
-    // FIX 1: Dùng toán tử ?? 0 để ép kiểu decimal? về decimal
+    // FIX 1: Chỉ tính toán những thứ còn tồn tại (Không còn Vehicles)
     decimal roomPrice = Model?.RentPrice ?? 0;
     decimal managementPrice = (Model?.Area ?? 0) * 6000;
-
-    // FIX 2: Xử lý null cho danh sách xe
-    decimal vehiclePrice = res?.Vehicles?.Count * 100000 ?? 0;
 }
 
 <!DOCTYPE html>
@@ -55,7 +52,7 @@
                 <i class="fa-solid fa-house"></i> Trang chủ
             </a>
             <p class="text-[10px] uppercase font-black tracking-widest mt-6 mb-2 opacity-60 px-4 italic">Quản lý tòa nhà</p>
-            <a asp-controller="Apartments" asp-action="Index" asp-route-building_id="@(Model?.building_id ?? 0)" class="flex items-center gap-3 w-full py-2.5 px-6 bg-[#d35400] text-white rounded-full font-bold no-underline text-sm shadow-lg">
+            <a asp-controller="Apartments" asp-action="Index" asp-route-buildingId="@(Model?.building_id ?? 0)" class="flex items-center gap-3 w-full py-2.5 px-6 bg-[#d35400] text-white rounded-full font-bold no-underline text-sm shadow-lg">
                 <i class="fa-solid fa-door-open"></i> Danh sách Phòng
             </a>
         </div>
@@ -82,9 +79,13 @@
                             <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=@res.FullName" class="w-16 h-16 rounded-2xl border shadow-sm">
                             <div>
                                 <p class="font-black text-xl text-gray-800 tracking-tighter">@res.FullName</p>
-                                <p class="text-sm text-gray-400 font-bold mt-1"><i class="fa-solid fa-phone mr-1"></i> @res.phone</p>
+                                <p class="text-sm text-gray-400 font-bold mt-1"><i class="fa-solid fa-phone mr-1"></i> @res.Phone</p>
                             </div>
                         </div>
+                    }
+                    else
+                    {
+                        <p class="text-xs text-gray-400 italic">Phòng trống</p>
                     }
                 </div>
 
@@ -108,28 +109,20 @@
 
             <div class="col-span-1 space-y-8">
                 <div class="bg-white p-8 rounded-[35px] shadow-sm border border-gray-100">
-                    <div class="flex justify-between items-center mb-6">
-                        <h3 class="font-black text-gray-400 text-[10px] uppercase tracking-[3px]">Phương tiện</h3>
-                        <span class="bg-purple-100 text-purple-600 px-3 py-1 rounded-lg text-[10px] font-black">@(res?.Vehicles?.Count ?? 0) XE</span>
-                    </div>
-                    @if (res?.Vehicles != null)
-                    {
-                        @foreach (var v in res.Vehicles)
-                        {
-                            <div class="flex justify-between items-center py-3 border-b border-dashed border-gray-100">
-                                <div class="text-xs font-black text-gray-700">@v.LicensePlate <span class="block text-[9px] text-gray-400 uppercase font-bold">@v.VehicleType</span></div>
-                                <span class="text-xs font-bold text-gray-800">100,000 đ</span>
-                            </div>
-                        }
-                    }
-                </div>
-
-                <div class="bg-white p-8 rounded-[35px] shadow-sm border border-gray-100">
-                    <h3 class="font-black text-gray-400 text-[10px] uppercase tracking-[3px] mb-6">Phí Quản lý</h3>
-                    <div class="flex justify-between mb-4">
-                        <div class="text-[10px] text-gray-400 font-black uppercase">@(Model?.Area ?? 0) m2 x 6.000đ</div>
-                        @* FIX 3: Dùng .ToString("N0") trên kiểu decimal đã ép *@
-                        <div class="text-sm font-black text-green-600">@managementPrice.ToString("N0") đ</div>
+                    <h3 class="font-black text-gray-400 text-[10px] uppercase tracking-[3px] mb-6">Phí Quản lý & Diện tích</h3>
+                    <div class="space-y-4">
+                        <div class="flex justify-between">
+                            <span class="text-[10px] text-gray-400 font-black">DIỆN TÍCH</span>
+                            <span class="text-sm font-black text-gray-700">@(Model?.Area ?? 0) m2</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-[10px] text-gray-400 font-black">ĐƠN GIÁ</span>
+                            <span class="text-sm font-black text-gray-700">6.000 đ</span>
+                        </div>
+                        <div class="pt-4 border-t border-dashed border-gray-100 flex justify-between">
+                            <span class="text-[10px] text-gray-400 font-black uppercase">Thành tiền</span>
+                            <span class="text-sm font-black text-green-600">@managementPrice.ToString("N0") đ</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -137,24 +130,22 @@
 
         <div class="mt-10 bg-white rounded-[45px] shadow-2xl border border-red-50 overflow-hidden">
             <div class="bg-red-500 px-10 py-5 flex justify-between items-center text-white">
-                <h4 class="text-xs font-black uppercase tracking-widest"><i class="fa-solid fa-file-invoice-dollar mr-2"></i> Hóa đơn tháng 04/2026</h4>
-                <span class="bg-white/20 px-4 py-1 rounded-full text-[10px] font-black uppercase">Chưa thanh toán</span>
+                <h4 class="text-xs font-black uppercase tracking-widest"><i class="fa-solid fa-file-invoice-dollar mr-2"></i> Tổng kết Hóa đơn tháng</h4>
             </div>
             <div class="p-10">
-                <div class="grid grid-cols-2 lg:grid-cols-4 gap-6 text-[11px] font-bold text-gray-400 uppercase tracking-wide">
-                    <div class="flex items-center gap-3"><i class="fa-solid fa-house text-gray-300"></i> Tiền phòng: <span class="text-gray-800">@roomPrice.ToString("N0") đ</span></div>
+                <div class="grid grid-cols-2 lg:grid-cols-3 gap-6 text-[11px] font-bold text-gray-400 uppercase tracking-wide">
+                    <div class="flex items-center gap-3"><i class="fa-solid fa-house"></i> Tiền phòng: <span class="text-gray-800">@roomPrice.ToString("N0") đ</span></div>
                     <div class="flex items-center gap-3"><i class="fa-solid fa-droplet text-blue-300"></i> Tiền Nước: <span class="text-gray-800" id="billWaterText">0 đ</span></div>
                     <div class="flex items-center gap-3"><i class="fa-solid fa-hand-holding-dollar text-green-300"></i> Phí Quản lý: <span class="text-gray-800">@managementPrice.ToString("N0") đ</span></div>
-                    <div class="flex items-center gap-3"><i class="fa-solid fa-car text-purple-300"></i> Phí gửi xe: <span class="text-gray-800">@vehiclePrice.ToString("N0") đ</span></div>
                 </div>
 
                 <div class="mt-12 flex justify-between items-center border-t border-dashed pt-10">
                     <div>
                         <p class="text-[10px] font-black text-gray-300 uppercase tracking-[4px] mb-2">Tổng cộng phải thu</p>
-                        <p class="text-5xl font-black text-red-500 tracking-tighter" id="grandTotalText">@((roomPrice + managementPrice + vehiclePrice).ToString("N0")) <span class="text-xl">đ</span></p>
+                        <p class="text-5xl font-black text-red-500 tracking-tighter" id="grandTotalText">@((roomPrice + managementPrice).ToString("N0")) <span class="text-xl">đ</span></p>
                     </div>
                     <div class="flex gap-4">
-                        <button onclick="openConfirmModal()" class="bg-[#27ae60] text-white px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-green-100 hover:bg-black transition-all active:scale-95">
+                        <button onclick="openConfirmModal()" class="bg-[#27ae60] text-white px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl hover:bg-black transition-all">
                             <i class="fa-solid fa-circle-check mr-2"></i> Xác nhận Thu
                         </button>
                     </div>
@@ -172,7 +163,7 @@
             <p class="text-sm text-gray-400 font-bold mb-10">Số tiền: <span class="text-red-500 font-black" id="confirmAmount">0 đ</span></p>
             <div class="flex gap-4">
                 <button onclick="closeConfirmModal()" class="flex-1 py-4 bg-gray-100 text-gray-500 rounded-2xl font-black text-[10px] uppercase tracking-widest">Hủy</button>
-                <button onclick="submitPayment()" class="flex-1 py-4 bg-[#27ae60] text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-green-100 hover:bg-black transition-all">Đồng ý</button>
+                <button onclick="submitPayment()" class="flex-1 py-4 bg-[#27ae60] text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg hover:bg-black transition-all">Đồng ý</button>
             </div>
         </div>
     </div>
@@ -180,7 +171,6 @@
     <script>
         const roomPrice = @roomPrice;
         const managementPrice = @managementPrice;
-        const vehiclePrice = @vehiclePrice;
 
         function updateWaterInvoice() {
             const usage = parseInt(document.getElementById('waterUsage').value) || 0;
@@ -198,7 +188,7 @@
             document.getElementById('totalWaterText').innerText = totalWater.toLocaleString('vi-VN') + " đ";
             document.getElementById('billWaterText').innerText = totalWater.toLocaleString('vi-VN') + " đ";
 
-            const grandTotal = roomPrice + managementPrice + vehiclePrice + totalWater;
+            const grandTotal = roomPrice + managementPrice + totalWater;
             document.getElementById('grandTotalText').innerHTML = grandTotal.toLocaleString('vi-VN') + ' <span class="text-xl">đ</span>';
         }
 
@@ -207,12 +197,6 @@
             document.getElementById('confirmModal').classList.remove('hidden');
         }
         function closeConfirmModal() { document.getElementById('confirmModal').classList.add('hidden'); }
-
-        function submitPayment() {
-            const aptId = "@(Model?.Id ?? 0)";
-            const rawAmount = document.getElementById('grandTotalText').innerText.replace(/[^0-9]/g, '');
-            // Fetch logic... (giữ nguyên của Đại Ca)
-        }
     </script>
 </body>
 </html>

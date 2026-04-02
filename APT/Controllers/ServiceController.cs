@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Http;
 using APT.Data;
 using APT.Models;
 using System.Linq;
@@ -16,122 +15,65 @@ namespace APT.Controllers
             _context = context;
         }
 
-        // ==================================
-        // TRANG QUẢN LÝ DỊCH VỤ
-        // GET: /services?building_id=1
-        // ==================================
         public IActionResult Index(int? building_id)
         {
-            var role = HttpContext.Session.GetString("role");
-            var user_id = HttpContext.Session.GetInt32("user_id");
-
-            // Manager chưa chọn building → auto lấy building đầu tiên được phân công
-            if (!building_id.HasValue && role == "manager")
+            // Nếu URL là 0 hoặc null, tự động lấy ID tòa nhà đầu tiên (thường là 1)
+            if (building_id == null || building_id == 0)
             {
-                var assigned = _context.Building_Managers
-                    .Where(bm => bm.ManagerId == user_id)
-                    .Include(bm => bm.Building)
-                    .Select(bm => bm.Building)
-                    .ToList();
-                if (assigned.Any())
+                var firstBuilding = _context.Buildings.OrderBy(b => b.Id).FirstOrDefault();
+                if (firstBuilding != null)
                 {
-                    return RedirectToAction("Index",
-                        new { building_id = assigned.First().Id });
+                    return RedirectToAction("Index", new { building_id = firstBuilding.Id });
                 }
-
-                TempData["msg_flash"] = "Bạn chưa được phân công quản lý tòa nhà nào.";
                 return RedirectToAction("Index", "Dashboard");
             }
 
-            if (!building_id.HasValue)
-            {
-                TempData["msg_flash"] = "Lỗi: Không xác định được tòa nhà!";
-                return RedirectToAction("Index", "Apartments");
-            }
-
+            // Lấy danh sách từ bảng services
             var services = _context.Services
                 .Where(s => s.building_id == building_id)
                 .OrderByDescending(s => s.Id)
                 .ToList();
 
-            var building = _context.Buildings
-                .FirstOrDefault(b => b.Id == building_id);
+            ViewBag.Building = _context.Buildings.Find(building_id);
+            ViewBag.BuildingId = building_id;
 
-            ViewBag.Building = building;
-
-            // Chọn view theo role
-            if (role == "manager")
-                return View("Index_Manager", services);
-
-            return View("Index", services);
+            return View(services);
         }
 
-        // ==========================
-        // THÊM DỊCH VỤ
-        // POST: /services/add
-        // ==========================
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public IActionResult Add(Service model)
         {
-            if (!ModelState.IsValid)
-                return RedirectToAction("Index",
-                    new { building_id = model.building_id });
+            ModelState.Remove("Building");
 
-            _context.Services.Add(model);
-            _context.SaveChanges();
+            // Ép kiểu dữ liệu nếu binding lỗi
+            if (model.building_id == 0) int.TryParse(Request.Form["building_id"], out int bId);
 
-            TempData["msg_flash"] = "Thêm dịch vụ thành công!";
-            return RedirectToAction("Index",
-                new { building_id = model.building_id });
+            if (ModelState.IsValid)
+            {
+                _context.Services.Add(model);
+                _context.SaveChanges();
+                TempData["msg_flash"] = "Thêm dịch vụ thành công!";
+            }
+            return RedirectToAction("Index", new { building_id = model.building_id });
         }
 
-        // ==========================
-        // CẬP NHẬT DỊCH VỤ
-        // POST: /services/update
-        // ==========================
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public IActionResult Update(Service model)
         {
-            var service = _context.Services.Find(model.Id);
-            if (service == null)
+            ModelState.Remove("Building");
+            var db = _context.Services.Find(model.Id);
+            if (db != null)
             {
-                TempData["msg_flash"] = "Không tìm thấy dịch vụ!";
-                return RedirectToAction("Index");
-            }
-
-            service.Name = model.Name;
-            service.Description = model.Description;
-            service.Price = model.Price;
-            service.Unit = model.Unit;
-
-            _context.SaveChanges();
-
-            TempData["msg_flash"] = "Cập nhật thành công!";
-            return RedirectToAction("Index",
-                new { building_id = service.building_id });
-        }
-
-        // ==========================
-        // XÓA DỊCH VỤ
-        // POST: /services/delete/5
-        // ==========================
-        [HttpPost]
-        public IActionResult Delete(int id, int return_building)
-        {
-            var service = _context.Services.Find(id);
-            if (service != null)
-            {
-                _context.Services.Remove(service);
+                db.ServiceName = model.ServiceName;
+                db.Description = model.Description;
+                db.Price = model.Price;
+                db.Unit = model.Unit;
                 _context.SaveChanges();
-                TempData["msg_flash"] = "Đã xóa dịch vụ.";
+                TempData["msg_flash"] = "Cập nhật thành công!";
             }
-            else
-            {
-                TempData["msg_flash"] = "Lỗi khi xóa.";
-            }
-
-            return RedirectToAction("Index",
-                new { building_id = return_building });
+            return RedirectToAction("Index", new { building_id = model.building_id });
         }
     }
 }

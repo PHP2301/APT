@@ -91,45 +91,81 @@ namespace APT.Controllers
         // 3. GET: Chi tiết phòng để lập hóa đơn
         public IActionResult RoomDetails(int roomId)
         {
-            var apt = _context.Apartments
-                .Include(a => a.Building)
+            var apartment = _context.Apartments
                 .Include(a => a.Resident)
-                    .ThenInclude(r => r.Vehicles)
-                .Include(a => a.ApartmentServices)
-                    .ThenInclude(asv => asv.Service)
                 .FirstOrDefault(a => a.Id == roomId);
 
-            if (apt == null) return NotFound();
+            if (apartment == null) return NotFound();
 
-            var latestReading = _context.UtilityReadings
-                .Where(u => u.ApartmentId == roomId)
-                .OrderByDescending(u => u.Id)
+            // CỰC KỲ QUAN TRỌNG: Phải nạp LatestBill vào đây thì View mới thấy
+            ViewBag.LatestBill = _context.Bills
+                .Where(b => b.RoomId == roomId && b.Status == false)
+                .OrderByDescending(b => b.CreatedAt)
                 .FirstOrDefault();
 
-            ViewBag.Reading = latestReading;
-
-            return View(apt);
+            return View(apartment);
         }
 
         // 4. POST: Xác nhận thu tiền qua Ajax
+        // --- DÀNH CHO ADMIN ---
         [HttpPost]
-        public IActionResult ConfirmPayment(int apartmentId, decimal amount)
+        [ValidateAntiForgeryToken]
+        public IActionResult AdminConfirmPayment(int apartmentId, decimal amount)
         {
+            // Tìm bill chưa thanh toán của phòng này
             var bill = _context.Bills
                 .Where(b => b.RoomId == apartmentId && b.Status == false)
                 .OrderByDescending(b => b.CreatedAt)
                 .FirstOrDefault();
 
-            if (bill != null)
+            if (bill == null)
             {
+                // Nếu không có bill nợ, tạo mới hoàn toàn
+                bill = new Bill
+                {
+                    RoomId = apartmentId,
+                    TotalMoney = (int)amount,
+                    Status = false, // Admin thu tiền mặt thì chốt luôn là 1
+                    CreatedAt = DateTime.Now,
+                    PaidAt = DateTime.Now,
+                    Month = "Tháng " + DateTime.Now.Month
+                };
+                _context.Bills.Add(bill);
+            }
+            else
+            {
+                // Nếu đã có bill nợ (do Admin bấm chốt nước trước đó), thì cập nhật nó thành Đã thanh toán
                 bill.Status = true;
                 bill.PaidAt = DateTime.Now;
-                _context.SaveChanges();
-
-                return Json(new { success = true, message = "Đã thu tiền thành công!" });
+                bill.TotalMoney = (int)amount;
             }
 
-            return Json(new { success = false, message = "Không tìm thấy hóa đơn!" });
+            _context.SaveChanges();
+            return Json(new { success = true, message = "Đã Nhận Tiền!" });
+        }
+
+        // --- DÀNH CHO CƯ DÂN ---
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult ResidentProcessPayment(int apartmentId, decimal amount)
+        {
+            // Cư dân chỉ được thanh toán HÓA ĐƠN ĐÃ CÓ SẴN (do Admin chốt số nước rồi)
+            var bill = _context.Bills
+                .Where(b => b.RoomId == apartmentId && b.Status == false)
+                .OrderByDescending(b => b.CreatedAt)
+                .FirstOrDefault();
+
+            if (bill == null)
+            {
+                return Json(new { success = false, message = "Hóa đơn chưa được Ban quản lý chốt số nước. Đại Ca vui lòng đợi Admin nhé!" });
+            }
+
+            // Chốt trạng thái thanh toán online
+            bill.Status = true;
+            bill.PaidAt = DateTime.Now;
+            _context.SaveChanges();
+
+            return Json(new { success = true, message = "Đại Ca đã thanh toán hóa đơn thành công rực rỡ!" });
         }
     }
 }

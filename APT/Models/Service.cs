@@ -1,35 +1,35 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
-using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace APT.Models
 {
-    [Table("services")] // Đảm bảo trỏ đúng tên bảng trong MySQL
+    [Table("services")]
     public class Service
     {
+        [Key]
+        [Column("id")]
         public int Id { get; set; }
 
         [Column("building_id")]
-        public int BuildingId { get; set; }
+        public int building_id { get; set; }
 
-        // MẸO: Thêm thuộc tính này để "cứu" 6 lỗi Build ở các Controller
-        // Nó trỏ thẳng về BuildingId nên dữ liệu luôn đồng bộ
-        [NotMapped]
-        public int building_id
-        {
-            get => BuildingId;
-            set => BuildingId = value;
-        }
+        [Column("service_name")]
+        public string ServiceName { get; set; } = null!;
 
-        // Navigation
-        [ForeignKey("BuildingId")]
-        public Building? Building { get; set; }
-
-        public string Name { get; set; } = null!;
-
+        [Column("description")]
         public string? Description { get; set; }
 
+        [Column("price")]
         public decimal Price { get; set; }
 
+        [Column("unit")]
         public string? Unit { get; set; }
+
+        // Biến phụ để tránh lỗi build ở các view cũ dùng .Name
+        [NotMapped]
+        public string Name { get => ServiceName; set => ServiceName = value; }
+
+        [ForeignKey("building_id")]
+        public virtual Building? Building { get; set; }
     }
 }

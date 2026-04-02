@@ -19,6 +19,14 @@
         <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-10 gap-6">
             <div>
                 <h2 class="text-[#8b0000] text-3xl font-black flex items-center gap-3 uppercase">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold">Danh sách phòng - @ViewBag.CurrentBuilding?.Name</h2>
+
+                        @* Nút để quay lại chọn Block khác nếu cần *@
+                        <a asp-controller="Buildings" asp-action="Choose" class="text-sm text-teal-600 hover:underline">
+                            <i class="fa-solid fa-rotate mr-1"></i> Đổi Block khác
+                        </a>
+                    </div>
                     <i class="fa-solid fa-building-user"></i> Danh sách Phòng - @(building?.Name ?? "IDICO")
                 </h2>
                 <p class="text-[#4a3728] font-bold opacity-80 mt-1">Quản lý trạng thái, giá thuê và cư dân.</p>
@@ -31,12 +39,13 @@
                 </div>
 
                 @* FIX: Cập nhật asp-route-building_id cho các nút bấm *@
-                <a asp-controller="Residents" asp-action="ListByBuilding" asp-route-building_id="@bId" class="bg-[#219ebc] text-white px-4 py-2 rounded-xl font-bold text-sm shadow-md no-underline flex items-center gap-2 hover:bg-black transition-all">
+                <a asp-controller="Residents"
+                   asp-action="Index"
+                   asp-route-building_id="@bId"
+                   class="bg-[#219ebc] text-white px-4 py-2 rounded-xl font-bold text-sm shadow-md no-underline flex items-center gap-2 hover:bg-black transition-all">
                     <i class="fa-solid fa-users"></i> Cư dân
                 </a>
-                <a asp-controller="Basements" asp-action="Index" asp-route-building_id="@bId" class="bg-[#665191] text-white px-4 py-2 rounded-xl font-bold text-sm shadow-md no-underline flex items-center gap-2 hover:bg-black transition-all">
-                    <i class="fa-solid fa-warehouse"></i> Quản lý Hầm
-                </a>
+               
                 <a asp-controller="Services" asp-action="Index" asp-route-building_id="@bId" class="bg-[#00a896] text-white px-4 py-2 rounded-xl font-bold text-sm shadow-md no-underline flex items-center gap-2 hover:bg-black transition-all">
                     <i class="fa-solid fa-bell-concierge"></i> Dịch vụ
                 </a>
@@ -95,19 +104,30 @@
                     </div>
 
                     <div class="grid grid-cols-2 gap-2 mt-auto">
+                        @* 1. Nút Sửa Căn Hộ *@
                         <a asp-action="Edit" asp-route-id="@item.Id" class="py-2 rounded-lg border border-gray-300 text-gray-600 text-center font-bold text-xs hover:bg-gray-50 no-underline transition-all">
                             <i class="fa-solid fa-pen-to-square"></i> Sửa
                         </a>
 
                         @if (item.Status == "Available")
                         {
-                            <a asp-controller="Residents" asp-action="AddToApartment" asp-route-apartmentId="@item.Id" class="bg-green-600 text-white py-2 rounded-lg font-bold text-xs text-center no-underline shadow-md hover:bg-black transition-all flex items-center justify-center gap-1">
+                            @* 2. Nút Thêm Cư Dân -> Chuyển hướng sang Residents/Edit *@
+                            <a asp-controller="Residents"
+                               asp-action="Edit"
+                               asp-route-id="0"
+                               asp-route-building_id="@item.building_id"
+                               asp-route-apartment_id="@item.Id"
+                               class="bg-green-600 text-white py-2 rounded-lg font-bold text-xs text-center no-underline shadow-md hover:bg-black transition-all flex items-center justify-center gap-1">
                                 <i class="fa-solid fa-user-plus"></i> Thêm Cư Dân
                             </a>
                         }
                         else
                         {
-                            <a asp-controller="Billing" asp-action="RoomDetails" asp-route-roomId="@item.Id" class="bg-blue-600 text-white py-2 rounded-lg font-bold text-xs text-center no-underline shadow-md hover:bg-black transition-all flex items-center justify-center gap-1">
+                            @* 3. Nút Quản lý & Thu *@
+                            <a asp-controller="Billing"
+                               asp-action="RoomDetails"
+                               asp-route-roomId="@item.Id"
+                               class="bg-blue-600 text-white py-2 rounded-lg font-bold text-xs text-center no-underline shadow-md hover:bg-black transition-all flex items-center justify-center gap-1">
                                 <i class="fa-solid fa-file-invoice-dollar"></i> Quản lý & Thu
                             </a>
                         }

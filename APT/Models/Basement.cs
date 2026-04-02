@@ -29,7 +29,7 @@ namespace APT.Models
         // Navigation
         public Building Building { get; set; } = null!;
 
-        public ICollection<Vehicle> Vehicles { get; set; }
-            = new List<Vehicle>();
+        //public ICollection<Vehicle> Vehicles { get; set; }
+        //    = new List<Vehicle>();
     }
 }

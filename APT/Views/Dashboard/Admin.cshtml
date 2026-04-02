@@ -36,116 +36,132 @@
         border-radius: 35px;
         padding: 2.5rem 2rem;
         text-align: center;
-        border: 2px solid transparent;
+        border-bottom: 8px solid transparent;
         height: 100%;
-        position: relative;
-        z-index: 1;
+        transition: all 0.3s ease;
     }
 
-    /* LỚP CẤP CỨU CHO NÚT BẤM */
+        .feature-box:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+        }
+
     .btn-access {
         display: block;
         width: 100%;
-        padding: 0.85rem;
+        padding: 1rem;
         color: white !important;
-        border-radius: 9999px;
-        font-weight: bold;
+        border-radius: 20px;
+        font-weight: 800;
         text-align: center;
         text-decoration: none !important;
-        transition: all 0.2s ease-in-out;
-        cursor: pointer !important;
-        position: relative;
-        z-index: 50 !important; /* Đảm bảo nằm trên mọi lớp đè */
-        pointer-events: auto !important;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: all 0.2s ease;
     }
 
         .btn-access:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            filter: brightness(1.1);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
         }
 
     .feature-icon i {
         font-size: 3.5rem;
-        margin-bottom: 1rem;
+        margin-bottom: 1.5rem;
     }
 </style>
 
 <div class="min-h-screen bg-[#f5ebe0] py-8 px-4 md:px-10">
     <div class="max-w-7xl mx-auto dashboard-wrapper shadow-2xl">
 
-        <div class="text-center mb-10">
-            <h2 class="text-[#4a3728] text-4xl font-bold flex items-center justify-center gap-3">
-                <i class="fa-solid fa-gauge-high"></i> Bảng Điều Khiển Admin
+        @* --- HEADER --- *@
+        <div class="text-center mb-12">
+            <h2 class="text-[#4a3728] text-4xl font-black flex items-center justify-center gap-4 uppercase tracking-tighter">
+                <i class="fa-solid fa-shield-halved text-[#8b0000]"></i> Quản Trị Hệ Thống
             </h2>
-            <p class="text-[#7f5539] mt-2 text-lg font-medium">Chào mừng <strong>Đại Ca</strong> đã quay trở lại!</p>
+            <p class="text-[#7f5539] mt-2 text-lg font-bold">Chào mừng <span class="text-[#8b0000]">Super Admin</span> đã quay trở lại!</p>
         </div>
 
         <div class="grid grid-cols-12 gap-8">
 
+            @* --- CỘT TRÁI: THỐNG KÊ --- *@
             <div class="col-span-12 lg:col-span-4 flex flex-col gap-6">
                 <div class="grid grid-cols-2 gap-4">
-                    <div class="card-stat bg-[#6C63FF] shadow-lg hover:scale-105">
-                        <h2 class="text-4xl font-extrabold">@data.total_buildings</h2>
-                        <span class="text-sm font-medium opacity-90">Tòa nhà</span>
+                    <div class="card-stat bg-[#6C63FF] shadow-lg">
+                        <h2 class="text-4xl font-black">@data.total_buildings</h2>
+                        <span class="text-xs font-bold uppercase opacity-80">Tòa nhà</span>
                     </div>
-                    <div class="card-stat bg-[#2ECC71] shadow-lg hover:scale-105">
-                        <h2 class="text-4xl font-extrabold">@data.total_rooms</h2>
-                        <span class="text-sm font-medium opacity-90">Tổng số phòng</span>
+                    <div class="card-stat bg-[#2ECC71] shadow-lg">
+                        <h2 class="text-4xl font-black">@data.total_rooms</h2>
+                        <span class="text-xs font-bold uppercase opacity-80">Phòng</span>
                     </div>
                     <div class="col-span-2">
-                        <div class="card-stat bg-[#5D4037] shadow-lg hover:scale-105">
-                            <h2 class="text-4xl font-extrabold">@data.total_users</h2>
-                            <span class="text-sm font-medium opacity-90">Người dùng hệ thống</span>
+                        <div class="card-stat bg-[#5D4037] shadow-lg">
+                            <h2 class="text-4xl font-black">@data.total_users</h2>
+                            <span class="text-xs font-bold uppercase opacity-80">Cư dân hệ thống</span>
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-white rounded-[35px] p-6 shadow-xl flex-grow flex flex-col items-center">
-                    <h6 class="font-bold mb-4 text-[#8B0000] text-lg text-center">Tỷ lệ phòng theo Tòa nhà</h6>
-                    <div class="relative w-full h-[280px]">
+                @* Biểu đồ *@
+                <div class="bg-white rounded-[35px] p-8 shadow-xl flex-grow flex flex-col items-center">
+                    <h6 class="font-black mb-6 text-[#8B0000] text-sm uppercase tracking-widest text-center border-b-2 border-gray-100 pb-2 w-full">Thống kê căn hộ</h6>
+                    <div class="relative w-full h-[250px]">
                         <canvas id="apartmentChart"></canvas>
                     </div>
                 </div>
             </div>
 
-            <div class="col-span-12 lg:col-span-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+            @* --- CỘT PHẢI: CÁC CHỨC NĂNG CHÍNH --- *@
+            <div class="col-span-12 lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-8">
 
-                <div class="feature-box shadow-xl flex flex-col justify-between hover:border-[#D35400] transition-all group relative">
-                    <div class="mb-4">
-                        <div class="feature-icon text-[#D35400]"><i class="fa-solid fa-city"></i></div>
-                        <h5 class="text-[#4a3728] font-bold text-xl mb-4 uppercase">Quản Lý Tòa nhà</h5>
-                        <p class="text-sm text-gray-500 mb-6">Xem danh sách các Block A, B, C và thiết lập cấu trúc tòa nhà.</p>
+                @* Chức năng 1: Quản lý tòa nhà *@
+                <div class="feature-box shadow-xl flex flex-col justify-between hover:border-[#D35400] group" style="border-bottom-color: #D35400;">
+                    <div class="mb-6">
+                        <div class="feature-icon text-[#D35400] transition-transform group-hover:scale-110 duration-300">
+                            <i class="fa-solid fa-city"></i>
+                        </div>
+                        <h5 class="text-[#4a3728] font-black text-2xl mb-4 uppercase tracking-tight">Cơ cấu Tòa nhà</h5>
+                        <p class="text-sm text-gray-500 font-medium leading-relaxed">
+                            Xem danh sách các Block A, B, C. Thiết lập cấu trúc tầng, hầm và thông tin pháp lý cho từng tòa nhà.
+                        </p>
                     </div>
-                    @* TRỎ VỀ ĐÂY: Trang ChooseBuilding (Có ảnh các Block) *@
-                    <a asp-controller="Buildings" asp-action="ChooseBuilding"
-                       class="btn-access bg-[#D35400] hover:bg-[#a04000] no-underline relative z-10">
-                        ➜ Truy cập
+                    <a asp-controller="Buildings" asp-action="Index"
+                       class="btn-access bg-[#D35400] shadow-orange-200">
+                        <i class="fa-solid fa-arrow-right-to-bracket mr-2"></i> Vào Quản Lý
                     </a>
                 </div>
 
-                <div class="feature-box shadow-xl flex flex-col justify-between hover:border-[#0d9488] transition-all group relative">
-                    <div class="mb-4">
-                        <div class="feature-icon text-[#0d9488]"><i class="fa-solid fa-door-open"></i></div>
-                        <h5 class="text-[#4a3728] font-bold text-xl mb-4 uppercase">Quản Lý Căn hộ</h5>
-                        <p class="text-sm text-gray-500 mb-6">Quản lý chi tiết từng phòng, giá thuê và cư dân bên trong.</p>
+                @* Chức năng 2: Quản lý căn hộ (Dẫn về trang chọn Block) *@
+                <div class="feature-box shadow-xl flex flex-col justify-between hover:border-[#0d9488] group" style="border-bottom-color: #0d9488;">
+                    <div class="mb-6">
+                        <div class="feature-icon text-[#0d9488] transition-transform group-hover:scale-110 duration-300">
+                            <i class="fa-solid fa-door-open"></i>
+                        </div>
+                        <h5 class="text-[#4a3728] font-black text-2xl mb-4 uppercase tracking-tight">Quản Lý Căn hộ</h5>
+                        <p class="text-sm text-gray-500 font-medium leading-relaxed">
+                            Quản lý chi tiết từng phòng, giá thuê, dịch vụ và tình trạng cư trú của cư dân trong từng Block.
+                        </p>
                     </div>
-                    @* CŨNG TRỎ VỀ ĐÂY: Vì phải chọn Tòa nhà trước thì mới biết xem phòng của tòa nào *@
                     <a asp-controller="Apartments" asp-action="Index"
-                       class="btn-access bg-[#0d9488] hover:bg-[#0a6b62] no-underline relative z-10">
-                        ➜ Truy cập
+                       class="btn-access bg-[#0d9488] shadow-teal-200 no-underline flex items-center justify-center">
+                        <i class="fa-solid fa-list-check mr-2"></i> Xem Danh Sách Phòng
                     </a>
                 </div>
 
-                <div class="feature-box shadow-xl flex flex-col justify-between hover:border-[#5D4037] transition-all group relative">
-                    <div class="mb-4">
-                        <div class="feature-icon text-[#5D4037]"><i class="fa-solid fa-users-gear"></i></div>
-                        <h5 class="text-[#4a3728] font-bold text-xl mb-4 uppercase">Quản Lý Nhân Sự</h5>
-                        <p class="text-sm text-gray-500 mb-6">Quản lý danh sách Manager và phân quyền hệ thống.</p>
+                @* Chức năng 3: Dịch vụ & Tiện ích (Mới) *@
+                <div class="feature-box shadow-xl flex flex-col justify-between hover:border-[#2980b9] group md:col-span-2" style="border-bottom-color: #2980b9;">
+                    <div class="flex flex-col md:flex-row items-center gap-8">
+                        <div class="feature-icon text-[#2980b9] shrink-0"><i class="fa-solid fa-hand-holding-heart"></i></div>
+                        <div class="text-left">
+                            <h5 class="text-[#4a3728] font-black text-2xl mb-2 uppercase tracking-tight">Dịch vụ chung cư</h5>
+                            <p class="text-sm text-gray-500 font-medium">Quản lý các loại phí dịch vụ, điện nước, và tiện ích nội khu cho cư dân.</p>
+                        </div>
+                        <a asp-controller="Services" asp-action="Index"
+                           class="btn-access bg-[#2980b9] shadow-blue-200 md:w-48 ml-auto">
+                            Quản lý
+                        </a>
                     </div>
-                    <a asp-controller="Dashboard" asp-action="ManagerList"
-                       class="btn-access no-underline relative z-10" style="background-color: #5D4037;">
-                        ➜ Truy cập
-                    </a>
                 </div>
             </div>
         </div>
@@ -156,14 +172,11 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            // Sửa lỗi JS khi data.chartData bị null hoặc sai định dạng
             const rawData = @Html.Raw(JsonSerializer.Serialize(data.chartData));
-
             const ctx = document.getElementById('apartmentChart').getContext('2d');
 
-            // Xử lý dữ liệu hiển thị
             const labels = rawData && rawData.length > 0
-                ? rawData.map(d => 'Tòa ' + (d.name || d.buildingId || 'ID'))
+                ? rawData.map(d => d.name || 'Tòa nhà')
                 : ['Chưa có dữ liệu'];
 
             const counts = rawData && rawData.length > 0
@@ -171,15 +184,15 @@
                 : [1];
 
             new Chart(ctx, {
-                type: 'doughnut', // Chuyển sang Doughnut nhìn cho sang
+                type: 'doughnut',
                 data: {
                     labels: labels,
                     datasets: [{
                         data: counts,
-                        backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'],
-                        borderWidth: 5,
+                        backgroundColor: ['#D35400', '#2980B9', '#27AE60', '#8E44AD', '#F1C40F'],
+                        borderWidth: 4,
                         borderColor: '#ffffff',
-                        hoverOffset: 20
+                        hoverOffset: 15
                     }]
                 },
                 options: {
@@ -189,13 +202,13 @@
                         legend: {
                             position: 'bottom',
                             labels: {
-                                padding: 20,
+                                padding: 15,
                                 usePointStyle: true,
-                                font: { weight: 'bold' }
+                                font: { weight: 'bold', size: 11 }
                             }
                         }
                     },
-                    cutout: '60%' // Làm rỗng ruột biểu đồ
+                    cutout: '65%'
                 }
             });
         });

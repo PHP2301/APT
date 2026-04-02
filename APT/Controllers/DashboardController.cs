@@ -1,9 +1,11 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 using APT.Data;
+using APT.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
-using APT.Models;
+using System.Collections.Generic;
+using System;
 
 namespace ApartmentMVC.Controllers
 {
@@ -16,30 +18,26 @@ namespace ApartmentMVC.Controllers
             _context = context;
         }
 
-        // ĐIỀU HƯỚNG TRANG CHỦ THEO ROLE
+        /// <summary>
+        /// NGÃ BA ĐIỀU HƯỚNG CHÍNH
+        /// </summary>
         public IActionResult Index()
         {
-            if (HttpContext.Session.GetInt32("user_id") == null)
-                return RedirectToAction("Login", "Users");
-
             var role = (HttpContext.Session.GetString("role") ?? "").ToLower();
 
-            return role switch
+            if (role == "admin" || role == "super_admin")
             {
-                "super_admin" or "admin" => AdminDashboard(),
-                "manager" => ManagerDashboard(),
-                "resident" => ResidentDashboard(),
-                _ => Logout()
-            };
-        }
+                return AdminDashboard();
+            }
+            else if (role == "User")
+            {
+                return ResidentDashboard();
+            }
 
-        private IActionResult Logout()
-        {
-            HttpContext.Session.Clear();
             return RedirectToAction("Login", "Users");
         }
 
-        // ================= 1. ADMIN DASHBOARD =================
+        // ================= 1. ADMIN DASHBOARD (TRANG THỐNG KÊ) =================
         private IActionResult AdminDashboard()
         {
             var data = new
@@ -49,7 +47,10 @@ namespace ApartmentMVC.Controllers
                 total_users = _context.Users.Count(),
                 chartData = _context.Apartments
                     .GroupBy(a => a.building_id)
-                    .Select(g => new { building_id = g.Key, total = g.Count() })
+                    .Select(g => new {
+                        name = _context.Buildings.Where(b => b.Id == g.Key).Select(b => b.Name).FirstOrDefault() ?? "N/A",
+                        total = g.Count()
+                    })
                     .ToList()
             };
 
@@ -57,74 +58,49 @@ namespace ApartmentMVC.Controllers
             return View("Admin");
         }
 
-        // ================= 2. QUẢN LÝ NHÂN SỰ (Dành cho Admin) =================
-        // Đổi tên từ Manager() thành Personnel() để tránh xung đột
-        public IActionResult ManagerList()
-        {
-            if (HttpContext.Session.GetInt32("user_id") == null)
-                return RedirectToAction("Login", "Users");
-
-            var users = _context.Users.Where(u => u.Role == "manager").ToList();
-
-            // Gọi đúng tên file ManagerList
-            return View("ManagerList", users);
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public IActionResult AddManager(User model)
-        {
-            model.Password = BCrypt.Net.BCrypt.HashPassword("Quanly@123"); // Băm mật khẩu cho bảo mật
-            model.Role = "manager";
-            model.CreatedAt = DateTime.Now;
-
-            ModelState.Remove("Password");
-            ModelState.Remove("Role");
-            ModelState.Remove("CreatedAt");
-
-            if (ModelState.IsValid)
-            {
-                _context.Users.Add(model);
-                _context.SaveChanges();
-                return RedirectToAction("ManagerList"); // Quay lại đúng trang danh sách
-            }
-            return View("ManagerList", _context.Users.Where(u => u.Role == "manager").ToList());
-        }
-
-        // ================= 3. MANAGER DASHBOARD (Trang chủ của Manager) =================
-        private IActionResult ManagerDashboard()
-        {
-            int user_id = HttpContext.Session.GetInt32("user_id") ?? 0;
-            var user = _context.Users.Find(user_id);
-
-            // Truy vấn thông qua bảng trung gian building_managers
-            var buildings = _context.Building_Managers // Nhớ map Table("building_managers") trong Model như em chỉ nhé
-                .Where(bm => bm.ManagerId == user_id)
-                .Include(bm => bm.Building)
-                .Select(bm => bm.Building)
-                .ToList();
-
-            ViewBag.User = user;
-
-            // Nếu buildings rỗng, trang web sẽ hiện cái khung trắng như trong ảnh của Đại Ca
-            return View("Manager", buildings);
-        }
-
-        // ================= 4. RESIDENT DASHBOARD =================
+        // ================= 2. RESIDENT DASHBOARD =================
         private IActionResult ResidentDashboard()
         {
             int user_id = HttpContext.Session.GetInt32("user_id") ?? 0;
-            var resident = _context.Residents
-                .Include(r => r.Building)
-                .FirstOrDefault(r => r.user_id == user_id);
 
-            if (resident != null)
+            // Lấy thông tin User hiện tại kèm theo Apartment của họ
+            var userResident = _context.Users
+                .Include(u => u.Apartments)
+                .FirstOrDefault(u => u.Id == user_id);
+
+            if (userResident != null)
             {
-                ViewBag.Bills = _context.Bills.Where(b => b.Apartment.ResidentId == resident.Id).ToList();
-                ViewBag.Services = _context.Services.Where(s => s.building_id == resident.building_id).ToList();
+                var apartment = userResident.Apartments.FirstOrDefault();
+                if (apartment != null)
+                {
+                    ViewBag.Bills = _context.Bills.Where(b => b.RoomId == apartment.Id).ToList();
+                    ViewBag.Services = _context.Services.Where(s => s.building_id == apartment.building_id).ToList();
+                    ViewBag.Apartment = apartment;
+                }
             }
 
-            return View("Resident");
+            return View("Resident", userResident);
+        }
+
+        // ================= 3. CHỌN TÒA NHÀ ĐỂ QUẢN LÝ =================
+        public IActionResult ChooseBuilding()
+        {
+            var role = (HttpContext.Session.GetString("role") ?? "").ToLower();
+            if (role != "admin" && role != "super_admin")
+            {
+                return RedirectToAction("Index");
+            }
+
+            var buildings = _context.Buildings.ToList();
+
+            // Trỏ về View Choose mà anh em mình vừa làm
+            return View("~/Views/Buildings/Choose.cshtml", buildings);
+        }
+
+        public IActionResult Logout()
+        {
+            HttpContext.Session.Clear();
+            return RedirectToAction("Login", "Users");
         }
     }
 }
