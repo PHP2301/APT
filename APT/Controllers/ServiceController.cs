@@ -41,39 +41,34 @@ namespace APT.Controllers
         }
 
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public IActionResult Add(Service model)
+        public async Task<IActionResult> Add(Service service, int building_id)
         {
-            ModelState.Remove("Building");
-
-            // Ép kiểu dữ liệu nếu binding lỗi
-            if (model.building_id == 0) int.TryParse(Request.Form["building_id"], out int bId);
-
-            if (ModelState.IsValid)
-            {
-                _context.Services.Add(model);
-                _context.SaveChanges();
-                TempData["msg_flash"] = "Thêm dịch vụ thành công!";
-            }
-            return RedirectToAction("Index", new { building_id = model.building_id });
+            service.building_id = building_id;
+            _context.services.Add(service);
+            await _context.SaveChangesAsync();
+            TempData["msg_flash"] = "Đã thêm dịch vụ thành công!";
+            return RedirectToAction("Index", new { building_id });
         }
 
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public IActionResult Update(Service model)
+        public async Task<IActionResult> Update(Service service, int building_id)
         {
-            ModelState.Remove("Building");
-            var db = _context.Services.Find(model.Id);
-            if (db != null)
+            _context.services.Update(service);
+            await _context.SaveChangesAsync();
+            TempData["msg_flash"] = "Cập nhật thành công!";
+            return RedirectToAction("Index", new { building_id });
+        }
+        [HttpPost]
+        public async Task<IActionResult> Delete(int id, int building_id)
+        {
+            var service = await _context.services.FindAsync(id);
+            if (service != null)
             {
-                db.ServiceName = model.ServiceName;
-                db.Description = model.Description;
-                db.Price = model.Price;
-                db.Unit = model.Unit;
-                _context.SaveChanges();
-                TempData["msg_flash"] = "Cập nhật thành công!";
+                _context.services.Remove(service);
+                await _context.SaveChangesAsync();
+                TempData["msg_flash"] = "Đã xóa dịch vụ.";
             }
-            return RedirectToAction("Index", new { building_id = model.building_id });
+            return RedirectToAction("Index", new { building_id });
         }
     }
 }

@@ -1,7 +1,6 @@
 ﻿@model IEnumerable<APT.Models.User>
 @{
     Layout = null;
-    // FIX: Đồng bộ tên tham số building_id
     int currentBuildingId = ViewBag.building_id ?? 0;
     var emptyRooms = ViewBag.EmptyRooms as IEnumerable<APT.Models.Apartment>;
 }
@@ -44,7 +43,7 @@
         <div class="w-20 h-20 rounded-full border-4 border-white overflow-hidden mb-4 bg-white">
             <img src="https://api.dicebear.com/7.x/adventurer/svg?seed=Lucky" alt="Avatar">
         </div>
-        <p class="font-bold text-sm mb-8 uppercase tracking-widest">Quản lý</p>
+        <p class="font-bold text-sm mb-8 uppercase tracking-widest">Đại Ca</p>
         <div class="w-full space-y-2">
             <a asp-controller="Dashboard" asp-action="Index" class="flex items-center gap-3 w-full py-2.5 px-6 bg-white text-gray-500 rounded-full font-bold no-underline text-sm shadow-sm hover:bg-gray-100 transition-all">
                 <i class="fa-solid fa-house"></i> Trang chủ
@@ -53,8 +52,13 @@
             <a asp-controller="Apartments" asp-action="Index" asp-route-building_id="@currentBuildingId" class="flex items-center gap-3 w-full py-2.5 px-6 bg-white text-gray-500 rounded-full font-bold no-underline text-sm hover:bg-gray-100 transition-all">
                 <i class="fa-solid fa-door-open"></i> Danh sách Phòng
             </a>
-            <a href="#" class="flex items-center gap-3 w-full py-2.5 px-6 btn-active rounded-full font-bold no-underline text-sm shadow-lg">
+            <a asp-controller="Residents" asp-action="Index" asp-route-building_id="@currentBuildingId" class="flex items-center gap-3 w-full py-2.5 px-6 bg-white text-gray-500 rounded-full font-bold no-underline text-sm hover:bg-gray-100 transition-all">
                 <i class="fa-solid fa-users"></i> Cư dân
+            </a>
+
+            @* Nút Dịch vụ đang được chọn (Active) *@
+            <a asp-controller="Services" asp-action="Index" asp-route-building_id="@currentBuildingId" class="flex items-center gap-3 w-full py-2.5 px-6 btn-active rounded-full font-bold no-underline text-sm shadow-lg">
+                <i class="fa-solid fa-bell-concierge"></i> Dịch vụ
             </a>
         </div>
         <div class="mt-auto w-full">
@@ -87,7 +91,8 @@
                 <thead>
                     <tr class="table-header text-[10px] uppercase font-black">
                         <th class="px-6 py-5 tracking-widest">Họ và tên</th>
-                        <th class="px-6 py-5 text-center tracking-widest">Trạng thái/Phòng</th>
+                        <th class="px-6 py-5 text-center tracking-widest">Phòng</th>
+                        <th class="px-6 py-5 text-center tracking-widest">Dịch vụ đang dùng</th>
                         <th class="px-6 py-5 text-center tracking-widest">Hành động</th>
                     </tr>
                 </thead>
@@ -107,6 +112,35 @@
                                 {
                                     <span class="bg-gray-100 text-gray-400 px-3 py-1 rounded-full text-[10px] font-black uppercase">Tự do</span>
                                 }
+                            </td>
+                            <td class="px-6 py-4 text-center">
+                                <div class="flex flex-wrap justify-center gap-1">
+                                    @if (r.Apartments != null && r.Apartments.Any())
+                                    {
+                                        var room = r.Apartments.First();
+                                        if (room.ApartmentServices != null && room.ApartmentServices.Any())
+                                        {
+                                            @foreach (var aps in room.ApartmentServices)
+                                            {
+                                                @if (aps.Service != null)
+                                                {
+                                                    <span class="text-[9px] bg-green-50 text-green-600 border border-green-200 px-2 py-0.5 rounded-md font-bold uppercase tracking-tighter" title="@aps.Service.Description">
+                                                        <i class="fa-solid fa-check text-[7px] mr-0.5"></i>
+                                                        @aps.Service.ServiceName: @(aps.Service.Price.ToString("N0"))đ
+                                                    </span>
+                                                }
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span class="text-[9px] text-gray-300 italic">Chưa đăng ký</span>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="text-[9px] text-gray-300 italic">N/A</span>
+                                    }
+                                </div>
                             </td>
                             <td class="px-6 py-4">
                                 <div class="flex justify-center gap-2">
@@ -132,7 +166,6 @@
         </div>
     </main>
 
-    @* MODAL THÊM CƯ DÂN *@
     <div id="addModal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white rounded-[35px] w-full max-w-md p-10 shadow-2xl">
             <h3 class="text-xl font-black text-[#d35400] mb-6 uppercase tracking-tighter">Thêm cư dân mới</h3>
@@ -149,7 +182,6 @@
         </div>
     </div>
 
-    @* MODAL VÀO PHÒNG *@
     <div id="assignRoomModal" class="hidden fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white rounded-[35px] w-full max-w-md p-10 shadow-2xl">
             <h3 class="text-xl font-black text-orange-600 mb-6 uppercase tracking-tighter italic">Phòng cho: <span id="targetName" class="text-gray-800"></span></h3>
@@ -167,7 +199,6 @@
                                     <input type="radio" name="apartmentId" value="@room.Id" required class="w-4 h-4 text-orange-600">
                                     <span class="font-black text-gray-700 text-sm">@room.FullRoomName</span>
                                 </div>
-                                @* FIX: Ép kiểu decimal? để ToString("N0") *@
                                 <span class="text-green-600 font-black text-xs">@((room.RentPrice ?? 0).ToString("N0")) đ</span>
                             </label>
                         }
@@ -187,16 +218,13 @@
 
     <script>
         function toggleAddModal() { document.getElementById('addModal').classList.toggle('hidden'); }
-
         function openAssignModal(id, name) {
             document.getElementById('resIdField').value = id;
             document.getElementById('targetName').innerText = name;
             document.getElementById('assignRoomModal').classList.remove('hidden');
         }
-
         function closeAssignModal() { document.getElementById('assignRoomModal').classList.add('hidden'); }
 
-        // Tìm kiếm cư dân thời gian thực
         document.getElementById('resSearch').addEventListener('keyup', function() {
             let value = this.value.toLowerCase();
             document.querySelectorAll('#residentTableBody tr').forEach(row => {

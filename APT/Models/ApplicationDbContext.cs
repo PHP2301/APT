@@ -20,6 +20,11 @@ namespace APT.Data
         public DbSet<UtilityPrice> UtilityPrices { get; set; }
         public DbSet<Bill> Bills { get; set; }
 
+        public DbSet<Building> buildings { get; set; }
+        public DbSet<Apartment> apartments { get; set; }
+
+        public DbSet<APT.Models.Service> services { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             //modelBuilder.Entity<Vehicle>(entity =>

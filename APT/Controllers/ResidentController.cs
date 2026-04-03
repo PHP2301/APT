@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks; // Thêm để dùng async/await
 
 namespace APT.Controllers
 {
@@ -19,7 +20,7 @@ namespace APT.Controllers
         }
 
         // ==========================================
-        // 1. DANH SÁCH CƯ DÂN (DÀNH CHO ADMIN)
+        // 1. DANH SÁCH CƯ DÂN (DÀNH CHO ADMIN) - ĐÃ SỬA ĐỂ HIỆN DỊCH VỤ
         // ==========================================
         public IActionResult Index(int building_id)
         {
@@ -28,11 +29,16 @@ namespace APT.Controllers
                 building_id = HttpContext.Session.GetInt32("current_building_id") ?? 1;
             }
 
+            // --- SỬA TẠI ĐÂY ---
+            // Thêm Include để lấy chuỗi: User -> Apartments -> ApartmentServices -> Service
             var residents = _context.Users
                 .Include(u => u.Apartments)
+                    .ThenInclude(a => a.ApartmentServices) // Lấy bảng trung gian đăng ký dịch vụ
+                    .ThenInclude(aps => aps.Service)       // Lấy thông tin chi tiết dịch vụ (Tên, Giá)
                 .Where(u => u.Role == "resident")
                 .ToList();
 
+            // Lấy danh sách phòng trống để hiển thị trong Modal "Vào phòng"
             ViewBag.EmptyRooms = _context.Apartments
                 .Where(a => a.building_id == building_id && (a.ResidentId == null || a.Status == "Available"))
                 .ToList();
@@ -49,13 +55,11 @@ namespace APT.Controllers
         {
             ViewBag.building_id = building_id;
 
-            // Nếu ID = 0 hoặc null -> Chế độ THÊM MỚI
             if (id == null || id == 0)
             {
                 return View(new User());
             }
 
-            // Nếu có ID -> Chế độ CHỈNH SỬA
             var user = _context.Users.Find(id);
             if (user == null) return NotFound();
 
@@ -69,31 +73,27 @@ namespace APT.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult Edit(User model, int? building_id, int? apartment_id)
         {
-            // Xóa sạch lỗi Validation để ép buộc lưu dữ liệu
             ModelState.Clear();
-
             int finalBId = building_id ?? 1;
 
             try
             {
                 if (model.Id == 0)
                 {
-                    // --- LOGIC THÊM MỚI ---
                     model.Role = "resident";
-                    model.Password = "123456"; // Pass mặc định
+                    model.Password = "123456";
                     model.CreatedAt = DateTime.Now;
 
                     _context.Users.Add(model);
-                    _context.SaveChanges(); // Lưu để lấy ID cư dân mới
+                    _context.SaveChanges();
 
-                    // --- TỰ ĐỘNG GÁN VÀO PHÒNG ---
                     if (apartment_id.HasValue && apartment_id > 0)
                     {
                         var apt = _context.Apartments.Find(apartment_id.Value);
                         if (apt != null)
                         {
                             apt.ResidentId = model.Id;
-                            apt.Status = "Occupied"; // Đổi sang Đang ở
+                            apt.Status = "Occupied";
                             _context.SaveChanges();
                             TempData["msg_flash"] = $"Đã thêm {model.FullName} và bàn giao phòng {apt.FullRoomName}!";
                         }
@@ -105,7 +105,6 @@ namespace APT.Controllers
                 }
                 else
                 {
-                    // --- LOGIC CẬP NHẬT ---
                     var userInDb = _context.Users.Find(model.Id);
                     if (userInDb == null) return NotFound();
 
@@ -120,7 +119,6 @@ namespace APT.Controllers
                     TempData["msg_flash"] = "Cập nhật hồ sơ thành công!";
                 }
 
-                // Quay về danh sách phòng tòa nhà
                 return RedirectToAction("Index", "Apartments", new { building_id = finalBId });
             }
             catch (Exception ex)
@@ -141,6 +139,8 @@ namespace APT.Controllers
 
             var resident = _context.Users
                 .Include(u => u.Apartments)
+                    .ThenInclude(a => a.ApartmentServices)
+                    .ThenInclude(aps => aps.Service)
                 .FirstOrDefault(u => u.Id == userId);
 
             if (resident == null) return NotFound();
