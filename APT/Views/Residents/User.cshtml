@@ -10,7 +10,7 @@
     decimal managementPrice = apartment?.ManagementPrice ?? 0;
     decimal basePrice = roomPrice + managementPrice;
 
-    // 2. Logic Tổng tiền: Nếu có Bill thì lấy tiền Bill (có cả nước), nếu chưa có lấy tiền phòng tạm tính
+    // 2. Logic Tổng tiền
     decimal finalAmount = latestBill != null ? latestBill.TotalMoney : basePrice;
 }
 
@@ -39,6 +39,10 @@
             background: #cbd5e1;
             border-radius: 10px;
         }
+
+        .modal-open {
+            overflow: hidden;
+        }
     </style>
 </head>
 <body class="flex h-screen bg-[#f1f3f5] font-sans">
@@ -49,12 +53,8 @@
             <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=@Model.FullName" alt="Avatar">
         </div>
         <p class="font-black text-sm mb-8 uppercase tracking-[3px]">Cư Dân</p>
-
         <div class="w-full space-y-2">
-            @* ĐỔI HREF THÀNH TRỎ QUA USERS/PROFILE *@
-            <a asp-controller="Users"
-               asp-action="Profile"
-               class="flex items-center gap-3 w-full py-2.5 px-6 btn-active rounded-full font-bold no-underline text-sm shadow-lg hover:scale-105 transition-all">
+            <a asp-controller="Users" asp-action="Profile" class="flex items-center gap-3 w-full py-2.5 px-6 btn-active rounded-full font-bold no-underline text-sm shadow-lg hover:scale-105 transition-all">
                 <i class="fa-solid fa-user-circle"></i> Cá nhân
             </a>
         </div>
@@ -66,13 +66,12 @@
     </aside>
 
     <main class="flex-1 p-8 overflow-y-auto custom-scrollbar">
-        @* --- HÓA ĐƠN THÁNG --- *@
+        @* --- HÓA ĐƠN --- *@
         <div class="bg-white rounded-[32px] shadow-xl border-t-[8px] border-purple-600 overflow-hidden mb-8">
             <div class="p-6 border-b border-gray-50 flex justify-between items-center bg-purple-50/30">
                 <h2 class="text-xs font-black text-purple-700 uppercase tracking-widest flex items-center gap-2">
                     <i class="fa-solid fa-file-invoice-dollar text-lg"></i> Hóa đơn tháng mới nhất
                 </h2>
-
                 @if (latestBill != null && latestBill.Status == true)
                 {
                     <span class="bg-green-100 text-green-600 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tighter">Đã thanh toán</span>
@@ -85,148 +84,136 @@
 
             <div class="p-10">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
-                    <div class="bg-gray-50 p-6 rounded-2xl border border-gray-100">
-                        <p class="text-[9px] font-black text-gray-400 uppercase mb-2 tracking-widest">Tiền phòng</p>
-                        <p class="text-xl font-black text-gray-700">@roomPrice.ToString("N0") <span class="text-xs">đ</span></p>
+                    <div class="bg-gray-50 p-6 rounded-2xl border border-gray-100 font-bold">
+                        <p class="text-[9px] text-gray-400 uppercase mb-2 tracking-widest">Tiền phòng</p>
+                        <p class="text-xl">@roomPrice.ToString("N0") đ</p>
                     </div>
-                    <div class="bg-gray-50 p-6 rounded-2xl border border-gray-100">
-                        <p class="text-[9px] font-black text-gray-400 uppercase mb-2 tracking-widest">Phí quản lý</p>
-                        <p class="text-xl font-black text-green-600">@managementPrice.ToString("N0") <span class="text-xs">đ</span></p>
+                    <div class="bg-gray-50 p-6 rounded-2xl border border-gray-100 font-bold">
+                        <p class="text-[9px] text-gray-400 uppercase mb-2 tracking-widest">Phí quản lý</p>
+                        <p class="text-xl text-green-600">@managementPrice.ToString("N0") đ</p>
                     </div>
-                    <div class="bg-gray-50 p-6 rounded-2xl border border-gray-100">
-                        <p class="text-[9px] font-black text-gray-400 uppercase mb-2 tracking-widest">Tiền nước</p>
-                        <p class="text-xl font-black text-blue-500">
+                    <div class="bg-gray-50 p-6 rounded-2xl border border-gray-100 font-bold">
+                        <p class="text-[9px] text-gray-400 uppercase mb-2 tracking-widest">Tiền nước</p>
+                        <p class="text-xl text-blue-500">
                             @{
                                 decimal waterMoney = (latestBill != null && latestBill.TotalMoney > basePrice) ? (latestBill.TotalMoney - basePrice) : 0;
                             }
-                            @(waterMoney > 0 ? waterMoney.ToString("N0") : "Chờ chốt") <span class="text-xs">đ</span>
+                            @(waterMoney > 0 ? waterMoney.ToString("N0") : "Chờ chốt") đ
                         </p>
                     </div>
                 </div>
 
                 <div class="pt-8 border-t border-dashed flex justify-between items-center">
                     <div>
-                        <p class="text-[10px] font-black text-gray-300 uppercase tracking-[4px] mb-1">
-                            @(latestBill != null ? "Tổng hóa đơn cần đóng" : "Tạm tính tháng tới")
-                        </p>
-                        <p class="text-5xl font-black text-purple-600 tracking-tighter">
-                            @finalAmount.ToString("N0") <span class="text-xl font-normal">đ</span>
-                        </p>
+                        <p class="text-[10px] font-black text-gray-300 uppercase tracking-[4px] mb-1">TỔNG HÓA ĐƠN</p>
+                        <p class="text-5xl font-black text-purple-600">@finalAmount.ToString("N0") <span class="text-xl font-normal">đ</span></p>
                     </div>
 
                     @if (latestBill != null && latestBill.Status == true)
                     {
-                        <button disabled class="bg-gray-100 text-gray-400 px-10 py-5 rounded-[24px] font-black text-xs uppercase tracking-widest cursor-not-allowed">
+                        <button disabled class="bg-gray-100 text-gray-400 px-10 py-5 rounded-[24px] font-black text-xs uppercase cursor-not-allowed">
                             <i class="fa-solid fa-check-circle mr-2"></i> ĐÃ HOÀN TẤT
                         </button>
                     }
                     else
                     {
                         @Html.AntiForgeryToken()
-                        <button onclick="processResidentPayment(@(apartment?.Id ?? 0), @finalAmount)"
-                                class="bg-purple-600 text-white px-10 py-5 rounded-[24px] font-black text-xs uppercase tracking-widest shadow-xl shadow-purple-100 hover:bg-black hover:scale-105 active:scale-95 transition-all">
+                        <button onclick="openPaymentModal(@(apartment?.Id ?? 0), @finalAmount)"
+                                class="bg-purple-600 text-white px-10 py-5 rounded-[24px] font-black text-xs uppercase shadow-xl hover:bg-black hover:scale-105 transition-all">
                             <i class="fa-solid fa-credit-card mr-2"></i> THANH TOÁN NGAY
                         </button>
                     }
                 </div>
             </div>
         </div>
-
-        @* --- DỊCH VỤ --- *@
-        <div class="bg-white rounded-[32px] shadow-xl border border-gray-100 overflow-hidden">
-            <div class="p-8 border-b border-gray-50">
-                <h2 class="text-xs font-black text-orange-600 uppercase tracking-[3px] flex items-center gap-2 mb-1">
-                    <i class="fa-solid fa-concierge-bell"></i> Dịch vụ tòa nhà
-                </h2>
-                <p class="text-[10px] text-gray-400 font-bold italic ml-6">Đăng ký thêm các tiện ích cư dân</p>
-            </div>
-
-            <table class="w-full text-left">
-                <thead class="bg-gray-50/50 text-[10px] uppercase font-black text-gray-400 tracking-widest">
-                    <tr>
-                        <th class="px-8 py-5">Tên dịch vụ</th>
-                        <th class="px-8 py-5 text-right">Đơn giá</th>
-                        <th class="px-8 py-5 text-center">Thao tác</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-50">
-                    @if (services != null && services.Any())
-                    {
-                        foreach (var s in services)
-                        {
-                            <tr class="hover:bg-gray-50/50 transition-all group">
-                                <td class="px-8 py-6 font-bold text-gray-700 text-sm italic group-hover:text-orange-600 transition-colors">@s.ServiceName</td>
-                                <td class="px-8 py-6 text-right">
-                                    <span class="text-green-600 font-black text-base">@s.Price.ToString("N0")</span>
-                                    <span class="text-[9px] text-gray-300 font-black uppercase ml-1">/ @s.Unit</span>
-                                </td>
-                                <td class="px-8 py-6 text-center">
-                                    <button type="button"
-                                            onclick="registerService(@s.Id, '@s.ServiceName')"
-                                            class="bg-gray-800 text-white px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-orange-600 transition-all shadow-md">
-                                        Đăng ký
-                                    </button>
-                                </td>
-                            </tr>
-                        }
-                    }
-                </tbody>
-            </table>
-        </div>
     </main>
+
+    @* --- MODAL QR THANH TOÁN --- *@
+    <div id="qrModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-[40px] w-full max-w-md overflow-hidden shadow-2xl border-t-[10px] border-green-500">
+            <div class="p-8 text-center">
+                <div class="w-16 h-16 bg-green-100 text-green-600 rounded-3xl flex items-center justify-center mx-auto mb-4">
+                    <i class="fa-solid fa-qrcode text-2xl"></i>
+                </div>
+                <h3 class="text-2xl font-black text-gray-800 uppercase">Quét QR chuyển khoản</h3>
+                <p class="text-[10px] text-gray-400 font-bold mt-1">NGUYEN HAI LONG - 02600202005 - VPBANK</p>
+
+                <div class="my-6 p-4 bg-gray-50 rounded-[32px] border-2 border-dashed border-gray-200">
+                    <img id="imgQR" src="" alt="VietQR" class="w-full h-auto rounded-2xl shadow-sm">
+                </div>
+
+                <div class="space-y-3">
+                    <button id="btnConfirmPaid" onclick="confirmPaidStep()" class="w-full py-4 bg-green-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-black transition-all">
+                        <i class="fa-solid fa-check-circle mr-2"></i> TÔI ĐÃ THANH TOÁN
+                    </button>
+                    <button onclick="closeQRModal()" class="w-full py-3 text-gray-400 font-bold text-xs uppercase hover:text-red-500 transition-colors">
+                        ĐÓNG
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        function registerService(serviceId, serviceName) {
-            Swal.fire({
-                title: 'Đăng ký dịch vụ?',
-                text: `Đại Ca muốn đăng ký sử dụng: ${serviceName}?`,
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#d35400',
-                cancelButtonColor: '#7d939e',
-                confirmButtonText: 'Xác nhận!',
-                cancelButtonText: 'Hủy'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    window.location.href = `/Residents/RegisterService?serviceId=${serviceId}`;
-                }
-            });
+        let currentAptId = 0;
+        let currentAmount = 0;
+
+        function openPaymentModal(aptId, amount) {
+            currentAptId = aptId;
+            currentAmount = amount;
+
+            // Tạo link QR VietQR
+            const bankId = "VPB";
+            const accountNo = "02600202005";
+            const description = `Thanh toan tien phong P${aptId}`;
+            const qrUrl = `https://img.vietqr.io/image/${bankId}-${accountNo}-compact.png?amount=${amount}&addInfo=${encodeURIComponent(description)}&accountName=NGUYEN%20HAI%20LONG`;
+
+            document.getElementById('imgQR').src = qrUrl;
+            document.getElementById('qrModal').classList.remove('hidden');
+            document.body.classList.add('modal-open');
         }
 
-        function processResidentPayment(aptId, amount) {
-            if (aptId === 0) {
-                Swal.fire('Lỗi', 'Không tìm thấy thông tin phòng!', 'error');
-                return;
-            }
+        function closeQRModal() {
+            document.getElementById('qrModal').classList.add('hidden');
+            document.body.classList.remove('modal-open');
+        }
 
-            Swal.fire({
-                title: 'Xác nhận thanh toán',
-                text: `Thanh toán hóa đơn số tiền ${amount.toLocaleString('vi-VN')}đ?`,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#219ebc',
-                confirmButtonText: 'Thanh toán ngay',
-                cancelButtonText: 'Để sau'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+        function confirmPaidStep() {
+            const btn = document.getElementById('btnConfirmPaid');
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
 
-                       fetch(`/Billing/ResidentProcessPayment?apartmentId=${aptId}&amount=${amount}`, {
-            method: 'POST',
-            headers: { 'RequestVerificationToken': token }
-        })
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.success) {
-                            Swal.fire('Thành công!', data.message, 'success').then(() => location.reload());
-                        } else {
-                            Swal.fire('Thất bại', data.message, 'error');
-                        }
-                    })
-                    .catch(() => Swal.fire('Lỗi', 'Không thể kết nối đến máy chủ!', 'error'));
-                }
-            });
+            // Hiệu ứng chờ 5 giây
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> ĐANG KIỂM TRA (5S)...`;
+
+            setTimeout(() => {
+                // Gọi API thực tế để cập nhật Database
+                fetch(`/Billing/ResidentProcessPayment?apartmentId=${currentAptId}&amount=${currentAmount}`, {
+                    method: 'POST',
+                    headers: { 'RequestVerificationToken': token }
+                })
+                .then(res => res.json())
+                .then(data => {
+                    closeQRModal();
+                    if (data.success) {
+                        Swal.fire({
+                            title: 'Thành công!',
+                            text: 'Đại Ca đã thanh toán hóa đơn thành công rực rỡ!',
+                            icon: 'success',
+                            confirmButtonColor: '#28a745'
+                        }).then(() => location.reload());
+                    } else {
+                        Swal.fire('Lỗi', data.message, 'error');
+                        btn.disabled = false;
+                        btn.innerHTML = `<i class="fa-solid fa-check-circle mr-2"></i> TÔI ĐÃ THANH TOÁN`;
+                    }
+                })                                                                 2
+                .catch(() => {
+                    Swal.fire('Lỗi', 'Không thể kết nối máy chủ!', 'error');
+                    btn.disabled = false;
+                });
+            }, 5000);
         }
     </script>
 </body>
