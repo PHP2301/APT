@@ -37,6 +37,12 @@
     </style>
 </head>
 <body class="flex h-screen bg-[#f8f9fa] font-sans">
+    <div class="admin-logout-top">
+        <a asp-controller="Users" asp-action="Logout" class="btn-logout-custom">
+            <i class="fa-solid fa-power-off"></i>
+            <span>Đăng xuất</span>
+        </a>
+    </div>
 
     @* --- SIDEBAR --- *@
     <aside class="w-64 sidebar-bg flex flex-col items-center py-8 px-4 text-white shrink-0 shadow-2xl">
