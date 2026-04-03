@@ -1,4 +1,4 @@
-﻿# GIAI ĐOẠN 1: BUILD (Sử dụng SDK để biên dịch code)
+# GIAI ĐOẠN 1: BUILD (Sử dụng SDK để biên dịch code)
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
